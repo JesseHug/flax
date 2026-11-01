@@ -15,7 +15,14 @@ import type { InboundApiItem } from "@/api/types";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { ArrowDown, ArrowUp, Copy, LayoutTemplate, X } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Copy,
+  LayoutTemplate,
+  QrCode,
+  X,
+} from "lucide-react";
 
 import {
   deleteSubscription,
@@ -46,7 +53,7 @@ import {
   pageCached,
   useCachedState,
 } from "@/hooks/use-cached-state";
-import { copyText, panelOrigin } from "@/pages/inbound/share";
+import { QrImage, copyText, panelOrigin } from "@/pages/inbound/share";
 import { Button } from "@/shadcn-bridge/heroui/button";
 import { Checkbox } from "@/shadcn-bridge/heroui/checkbox";
 import { Chip } from "@/shadcn-bridge/heroui/chip";
@@ -1143,6 +1150,8 @@ export default function SubscriptionPage() {
   const [saving, setSaving] = useState(false);
   const [detail, setDetail] = useState<SubscriptionItem | null>(null);
   const [detailTab, setDetailTab] = useState<"import" | "traffic">("import");
+  // The subscription whose QR code is open in the detail dialog.
+  const [qrFor, setQrFor] = useState<number | null>(null);
 
   useEffect(() => {
     if (!detail) setDetailTab("import");
@@ -1632,15 +1641,42 @@ export default function SubscriptionPage() {
                     <SubTrafficStats id={detail.id} />
                   ) : (
                     <>
-                      <Button
-                        className="w-full"
-                        color="primary"
-                        size="sm"
-                        startContent={<Copy className="h-3.5 w-3.5" />}
-                        onPress={() => copyText(url(detail), "订阅链接已复制")}
-                      >
-                        复制订阅链接（自动识别客户端）
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          className="flex-1"
+                          color="primary"
+                          size="sm"
+                          startContent={<Copy className="h-3.5 w-3.5" />}
+                          onPress={() =>
+                            copyText(url(detail), "订阅链接已复制")
+                          }
+                        >
+                          复制订阅链接（自动识别客户端）
+                        </Button>
+                        <Button
+                          isIconOnly
+                          aria-expanded={qrFor === detail.id}
+                          aria-label="订阅二维码"
+                          size="sm"
+                          title="订阅二维码"
+                          variant={qrFor === detail.id ? "flat" : "bordered"}
+                          onPress={() =>
+                            setQrFor((id) =>
+                              id === detail.id ? null : detail.id,
+                            )
+                          }
+                        >
+                          <QrCode className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      {qrFor === detail.id && (
+                        <div className="flex flex-col items-center gap-2 py-2">
+                          <QrImage text={url(detail)} />
+                          <p className="text-xs text-default-400">
+                            用客户端扫码导入（自动识别客户端格式）
+                          </p>
+                        </div>
+                      )}
                       <SubClientGrid
                         configClients={Object.entries(
                           detail.options.templates ?? {},
