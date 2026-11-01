@@ -675,7 +675,7 @@ function TopologyNodeChip({
 }) {
   return (
     <Chip
-      className={`shrink-0 font-mono shadow-sm ${borderColor}`}
+      className={`shrink-0 font-mono ${borderColor}`}
       size="sm"
       variant="flat"
     >
@@ -708,7 +708,7 @@ const ForwardingChainTopology = React.memo(function ForwardingChainTopology({
   if (topologyPaths.length === 0) return null;
 
   return (
-    <Card className="border border-divider/60 shadow-sm transition-shadow bg-gradient-to-br from-background to-default-50/50 mt-4">
+    <Card className="mt-4">
       <CardHeader className="py-3 px-4 flex flex-row items-center justify-between pb-1">
         <h3 className="text-sm font-semibold flex items-center gap-1.5 text-default-700">
           <Activity className="w-4 h-4 text-primary" />
@@ -1235,7 +1235,7 @@ export function TunnelMonitorView({ card }: { card?: boolean } = {}) {
 
         {/* Quality KPI Cards */}
         <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-          <Card className="border border-divider shadow-none">
+          <Card className="border border-divider">
             <CardBody className="flex flex-col items-start gap-1 px-3 py-2">
               <span className="text-xs text-default-500 flex items-center gap-1">
                 <Zap className="w-3 h-3" />
@@ -1247,7 +1247,7 @@ export function TunnelMonitorView({ card }: { card?: boolean } = {}) {
               />
             </CardBody>
           </Card>
-          <Card className="border border-divider shadow-none">
+          <Card className="border border-divider">
             <CardBody className="flex flex-col items-start gap-1 px-3 py-2">
               <span
                 className="text-xs text-default-500 flex items-center gap-1"
@@ -1262,7 +1262,7 @@ export function TunnelMonitorView({ card }: { card?: boolean } = {}) {
               />
             </CardBody>
           </Card>
-          <Card className="border border-divider shadow-none">
+          <Card className="border border-divider">
             <CardBody className="flex flex-col items-start gap-1 px-3 py-2">
               <span className="text-xs text-default-500">入口 → 出口 丢包</span>
               <span
@@ -1274,7 +1274,7 @@ export function TunnelMonitorView({ card }: { card?: boolean } = {}) {
               </span>
             </CardBody>
           </Card>
-          <Card className="border border-divider shadow-none">
+          <Card className="border border-divider">
             <CardBody className="flex flex-col items-start gap-1 px-3 py-2">
               <span
                 className="text-xs text-default-500"
@@ -1392,7 +1392,7 @@ export function TunnelMonitorView({ card }: { card?: boolean } = {}) {
       </div>
 
       {tunnelsError ? (
-        <div className="rounded-xl border border-divider bg-content1 px-3 py-2 text-sm text-default-600">
+        <div className="rounded-lg border border-divider px-3 py-2 text-sm text-default-600">
           {tunnelsError}
         </div>
       ) : null}
@@ -1409,7 +1409,7 @@ export function TunnelMonitorView({ card }: { card?: boolean } = {}) {
             return (
               <Card
                 key={tunnel.id}
-                className="group relative overflow-hidden shadow-sm border border-divider dark:border-default-100 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 h-full flex flex-col cursor-pointer bg-background"
+                className="group relative overflow-hidden border border-divider hover:bg-default-50 transition-all duration-300 h-full flex flex-col cursor-pointer bg-background"
                 onClick={() => setDetailTunnelId(tunnel.id)}
               >
                 <div
@@ -1422,7 +1422,7 @@ export function TunnelMonitorView({ card }: { card?: boolean } = {}) {
                 <CardHeader className="pb-2 pt-5 px-5 flex flex-row justify-between items-start gap-4">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="relative flex-shrink-0">
-                      <div className="w-10 h-10 rounded-xl bg-default-100 dark:bg-default-50/10 flex items-center justify-center border border-divider">
+                      <div className="w-8 h-8 rounded-md bg-default-100 flex items-center justify-center">
                         <ArrowRightLeft
                           className={`w-5 h-5 ${isEnabled ? "text-success" : "text-danger"}`}
                         />

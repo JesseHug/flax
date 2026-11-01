@@ -24,42 +24,39 @@ export function ConfigSection({
 }) {
   return (
     <section
-      className="scroll-mt-4 rounded-xl border border-divider bg-content1 shadow-sm"
+      className="scroll-mt-4 border-b border-divider"
       id={`config-${id}`}
     >
       <button
         aria-controls={`config-${id}-body`}
         aria-expanded={open}
-        className="flex w-full items-center gap-3 px-3 py-3 text-left"
+        className="flex w-full items-center gap-3 px-1 py-3.5 text-left transition-colors hover:bg-default-50"
         type="button"
         onClick={onToggle}
       >
         <div className="min-w-0 flex-1">
-          <h2 className="flex items-center gap-2 text-sm font-semibold">
+          <h2 className="flex items-baseline gap-2 text-sm font-medium">
             {title}
             {changed && (
-              <span className="rounded-full bg-warning-100 px-1.5 py-0.5 text-[10px] font-normal text-warning-700 dark:bg-warning-900/40 dark:text-warning-300">
+              <span className="text-xs font-normal text-warning-600">
                 未保存
               </span>
             )}
           </h2>
           {summary && (
-            <p className="mt-0.5 truncate text-xs text-default-500">
+            <p className="mt-0.5 truncate text-xs text-default-400">
               {summary}
             </p>
           )}
         </div>
         <ChevronDown
-          className={`h-4 w-4 shrink-0 text-default-400 transition-transform ${
+          className={`h-4 w-4 shrink-0 text-default-300 transition-transform ${
             open ? "rotate-180" : ""
           }`}
         />
       </button>
       {open && (
-        <div
-          className="space-y-4 border-t border-divider px-3 py-4"
-          id={`config-${id}-body`}
-        >
+        <div className="space-y-4 px-1 pb-6 pt-2" id={`config-${id}-body`}>
           {children}
         </div>
       )}
@@ -83,8 +80,8 @@ export function Field({
     return (
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-medium">{label}</p>
-          {help && <p className="text-xs text-default-500">{help}</p>}
+          <p className="text-sm">{label}</p>
+          {help && <p className="text-xs text-default-400">{help}</p>}
         </div>
         <div className="shrink-0">{children}</div>
       </div>
@@ -93,9 +90,9 @@ export function Field({
 
   return (
     <div className="space-y-1.5">
-      <p className="text-sm font-medium">{label}</p>
+      <p className="text-sm">{label}</p>
       {children}
-      {help && <p className="text-xs text-default-500">{help}</p>}
+      {help && <p className="text-xs text-default-400">{help}</p>}
     </div>
   );
 }

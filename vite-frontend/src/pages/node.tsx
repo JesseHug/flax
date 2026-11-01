@@ -1456,6 +1456,8 @@ export default function NodePage({
         />
       ) : (
         <PageToolbar
+          // Inside the 服务器 hub the action sits here, as on the other
+          // tabbed pages; standalone, it is in the header.
           more={[
             {
               key: "batch",
@@ -1466,6 +1468,11 @@ export default function NodePage({
           ]}
           placeholder={
             activeTab === "remote" ? "搜索远程服务器名称或 IP" : "搜索名称或 IP"
+          }
+          primary={
+            embedded
+              ? { key: "add", label: "新建服务器", onPress: handleAdd }
+              : undefined
           }
           search={currentSearchKeyword}
           view={{ value: viewMode, onChange: setViewMode }}
@@ -1521,11 +1528,7 @@ export default function NodePage({
             items={sortableNodeIds}
             strategy={rectSortingStrategy}
           >
-            <div
-              className={
-                card ? CARD_GRID : "grid grid-cols-1 gap-2 2xl:grid-cols-2"
-              }
-            >
+            <div className={card ? CARD_GRID : "flex flex-col"}>
               {displayNodes.map((node) => (
                 <NodeRow
                   key={node.id}

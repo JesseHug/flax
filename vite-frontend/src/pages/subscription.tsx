@@ -36,6 +36,7 @@ import {
   PageHeader,
   PageTabs,
   PageToolbar,
+  ToolbarButton,
 } from "@/components/page-kit";
 import { CARD_GRID, InfoCard } from "@/components/info-card";
 import { useViewMode } from "@/components/view-mode";
@@ -144,10 +145,10 @@ function UsageBar({ s, track }: { s: SubscriptionItem; track: string }) {
   const used = s.uploadBytes + s.downloadBytes;
   const pct = s.trafficLimit ? Math.min(100, (used / s.trafficLimit) * 100) : 0;
   const tone =
-    pct >= 100 ? "bg-danger" : pct >= 90 ? "bg-warning" : "bg-primary";
+    pct >= 100 ? "bg-danger" : pct >= 90 ? "bg-warning" : "bg-foreground";
 
   return (
-    <div className={`h-1.5 overflow-hidden rounded-full ${track}`}>
+    <div className={`h-[3px] overflow-hidden rounded-full ${track}`}>
       <div
         className={`h-full rounded-full ${tone}`}
         style={{ width: `${Math.max(2, pct)}%` }}
@@ -162,8 +163,8 @@ function Usage({ s, compact }: { s: SubscriptionItem; compact?: boolean }) {
 
   return (
     <div className={compact ? "space-y-1" : "space-y-1.5"}>
-      <div className="flex items-baseline justify-between gap-2 text-xs text-default-500">
-        <span className="font-mono">
+      <div className="flex items-baseline justify-between gap-2 text-xs text-default-400">
+        <span className="tabular-nums">
           {formatTraffic(used)}
           {s.trafficLimit
             ? ` / ${formatTraffic(s.trafficLimit)}`
@@ -177,7 +178,7 @@ function Usage({ s, compact }: { s: SubscriptionItem; compact?: boolean }) {
         <UsageBar s={s} track={compact ? "bg-default-100" : "bg-default-200"} />
       )}
       {!compact && (
-        <div className="font-mono text-xs text-default-400">
+        <div className="text-xs tabular-nums text-default-400">
           ↑ {formatTraffic(s.uploadBytes)} · ↓ {formatTraffic(s.downloadBytes)}
         </div>
       )}
@@ -603,7 +604,7 @@ function Editor({
               title="节点组"
             >
               {pickedGroups.length > 0 && (
-                <div className="divide-y divide-divider rounded-xl border border-divider">
+                <div className="divide-y divide-divider rounded-lg border border-divider">
                   {pickedGroups.map((g, i) => (
                     <div
                       key={g.id}
@@ -848,7 +849,7 @@ function Editor({
               </div>
 
               {o.chainLanding && o.chainRelay && (
-                <p className="rounded-xl bg-warning-50 px-3 py-2 text-xs text-warning-700 dark:bg-warning-500/10">
+                <p className="rounded-lg bg-warning-50 px-3 py-2 text-xs text-warning-700 dark:bg-warning-500/10">
                   现在用的是旧的关键词方式（落地：{o.chainLanding}，中转：
                   {o.chainRelay}）。在下面勾选节点后会改用勾选的节点
                 </p>
@@ -870,7 +871,7 @@ function Editor({
                   }}
                 />
                 {chainSources.length > 0 && (
-                  <div className="divide-y divide-divider rounded-xl border border-divider">
+                  <div className="divide-y divide-divider rounded-lg border border-divider">
                     {chainSources.map((src) => {
                       const role: ChainRole = o.chainLandingSources.includes(
                         src.id,
@@ -959,7 +960,7 @@ function Editor({
                     所选节点组里还没有节点
                   </p>
                 ) : (
-                  <div className="max-h-80 divide-y divide-divider overflow-y-auto rounded-xl border border-divider">
+                  <div className="max-h-80 divide-y divide-divider overflow-y-auto rounded-lg border border-divider">
                     {chainNodes.map((n, i) => {
                       const role = chainRole(n);
                       const overridden = pickedRole(n.original) !== null;
@@ -1017,7 +1018,7 @@ function Editor({
                       刷新
                     </button>
                   </p>
-                  <div className="max-h-96 overflow-y-auto rounded-xl border border-divider">
+                  <div className="max-h-96 overflow-y-auto rounded-lg border border-divider">
                     {preview.items.length === 0 ? (
                       <p className="p-3 text-xs text-default-500">没有节点</p>
                     ) : (
@@ -1080,7 +1081,7 @@ function Editor({
                       {slotLabel(kind)} · 「{view.name}」
                     </p>
                     {view.error ? (
-                      <p className="rounded-xl bg-danger-50 px-3 py-2 text-xs text-danger dark:bg-danger-500/10">
+                      <p className="rounded-lg bg-danger-50 px-3 py-2 text-xs text-danger dark:bg-danger-500/10">
                         模板出错：{view.error}
                       </p>
                     ) : (
@@ -1332,19 +1333,27 @@ export default function SubscriptionPage() {
       <Button
         isIconOnly
         aria-label={`复制 ${s.name} 的订阅链接`}
+        className="text-default-500"
         size="sm"
-        variant="flat"
+        title="复制订阅链接"
+        variant="light"
         onPress={() => copyText(url(s), "订阅链接已复制")}
       >
         <Copy className="h-4 w-4" />
       </Button>
-      <Switch
-        aria-label={`${s.enabled ? "停用" : "启用"} ${s.name}`}
-        isDisabled={toggling === s.id}
-        isSelected={s.enabled}
-        size="sm"
-        onValueChange={() => toggle(s)}
-      />
+      {/* Off: the link stops working and its nodes are cut off. */}
+      <span
+        className="flex"
+        title={s.enabled ? "已启用，点击停用订阅" : "已停用，点击启用订阅"}
+      >
+        <Switch
+          aria-label={`${s.enabled ? "停用" : "启用"} ${s.name}`}
+          isDisabled={toggling === s.id}
+          isSelected={s.enabled}
+          size="sm"
+          onValueChange={() => toggle(s)}
+        />
+      </span>
     </>
   );
   const subCard = (s: SubscriptionItem) => (
@@ -1410,7 +1419,7 @@ export default function SubscriptionPage() {
   const row = (s: SubscriptionItem) => (
     <div
       key={s.id}
-      className="flex cursor-pointer items-center gap-3 rounded-xl border border-divider bg-content1 px-3 py-2.5 shadow-sm transition-colors hover:bg-default-100"
+      className="flex cursor-pointer items-center gap-3 border-b border-divider px-2 py-3 transition-colors hover:bg-default-50"
       role="button"
       tabIndex={0}
       onClick={() => setDetail(s)}
@@ -1423,22 +1432,30 @@ export default function SubscriptionPage() {
       }}
     >
       <span
-        className={`h-2 w-2 shrink-0 rounded-full ${s.active ? "bg-success" : "bg-default-300"}`}
+        className={`h-1.5 w-1.5 shrink-0 rounded-full ${s.active ? "bg-success" : s.enabled ? "bg-danger" : "bg-default-300"}`}
       />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <span className="truncate font-medium">{s.name}</span>
+          <span className="truncate">{s.name}</span>
           {stateChip(s)}
         </div>
-        <div className="truncate text-xs text-default-500">
-          {s.userId ? `👤 ${s.userName || `#${s.userId}`} · ` : ""}
+        <div className="truncate text-xs text-default-400">
+          {s.userId ? `${s.userName || `#${s.userId}`} · ` : ""}
           {s.nodeCount} 个节点 · {sourceText(s)}
           {s.expireTime ? ` · ${expiryLabel(s.expireTime)}` : ""}
           {s.remark ? ` · ${s.remark}` : ""}
         </div>
-        <div className="mt-1.5">
-          <Usage compact s={s} />
-        </div>
+        {s.trafficLimit > 0 && (
+          <div className="mt-1.5 max-w-xs">
+            <UsageBar s={s} track="bg-default-100" />
+          </div>
+        )}
+      </div>
+      <div className="hidden w-40 shrink-0 text-right text-sm tabular-nums sm:block">
+        {formatTraffic(s.uploadBytes + s.downloadBytes)}
+        <span className="text-xs text-default-400">
+          {s.trafficLimit ? ` / ${formatTraffic(s.trafficLimit)}` : ""}
+        </span>
       </div>
       <div
         className="flex shrink-0 items-center gap-2"
@@ -1451,32 +1468,13 @@ export default function SubscriptionPage() {
   );
 
   return (
-    <AnimatedPage className="space-y-4 px-3 py-6 lg:px-6">
+    <AnimatedPage className="px-4 py-6 lg:px-10 lg:py-8">
       <PageHeader
         description={
           tab === "subs"
             ? "每个订阅一个链接：选节点组、分流和链式代理，客户端自动识别格式"
             : "节点组：从自建、导入的节点和订阅源里挑选，筛选、改名后给订阅用，多个订阅可以共用"
         }
-        primary={
-          tab === "subs"
-            ? {
-                key: "create",
-                label: "新建订阅",
-                onPress: () => setDraft(draftFrom(undefined, sources, groups)),
-              }
-            : {
-                key: "create-group",
-                label: "新建节点组",
-                onPress: () => setGroupDraft(groupDraftFrom()),
-              }
-        }
-        secondary={{
-          key: "templates",
-          label: templates.length > 0 ? `模板 ${templates.length}` : "模板",
-          icon: <LayoutTemplate className="h-3.5 w-3.5" />,
-          onPress: () => setTemplatesOpen(true),
-        }}
         title="订阅"
       />
 
@@ -1498,6 +1496,19 @@ export default function SubscriptionPage() {
       />
       <PageToolbar
         placeholder={tab === "subs" ? "搜索订阅名称或备注" : "搜索节点组名称"}
+        primary={
+          tab === "subs"
+            ? {
+                key: "create",
+                label: "新建订阅",
+                onPress: () => setDraft(draftFrom(undefined, sources, groups)),
+              }
+            : {
+                key: "create-group",
+                label: "新建节点组",
+                onPress: () => setGroupDraft(groupDraftFrom()),
+              }
+        }
         search={query}
         view={
           tab === "subs"
@@ -1505,7 +1516,17 @@ export default function SubscriptionPage() {
             : undefined
         }
         onSearch={setQuery}
-      />
+      >
+        <ToolbarButton onPress={() => setTemplatesOpen(true)}>
+          <LayoutTemplate className="h-3.5 w-3.5" />
+          模板
+          {templates.length > 0 && (
+            <span className="tabular-nums text-default-400">
+              {templates.length}
+            </span>
+          )}
+        </ToolbarButton>
+      </PageToolbar>
 
       {tab === "groups" ? (
         <NodeGroupList
@@ -1525,13 +1546,7 @@ export default function SubscriptionPage() {
         />
       ) : (
         <>
-          <div
-            className={
-              viewMode === "card"
-                ? CARD_GRID
-                : "grid grid-cols-1 gap-2 2xl:grid-cols-2"
-            }
-          >
+          <div className={viewMode === "card" ? CARD_GRID : "flex flex-col"}>
             {shownSubs.map(viewMode === "card" ? subCard : row)}
           </div>
         </>
@@ -1552,7 +1567,9 @@ export default function SubscriptionPage() {
             detail && (
               <>
                 <ModalHeader closable className="flex flex-col gap-1">
-                  <h2 className="text-lg font-bold break-all">{detail.name}</h2>
+                  <h2 className="break-all text-base font-semibold">
+                    {detail.name}
+                  </h2>
                   <p className="text-small font-normal text-default-500">
                     {detail.nodeCount} 个节点
                     {detail.expireTime
@@ -1561,9 +1578,9 @@ export default function SubscriptionPage() {
                   </p>
                 </ModalHeader>
                 <ModalBody className="space-y-3">
-                  <div className="space-y-1.5 rounded-xl bg-default-100 px-3 py-2.5">
+                  <div className="space-y-1.5 rounded-lg border border-divider px-3 py-2.5">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono text-sm">
+                      <span className="text-sm tabular-nums">
                         {formatTraffic(
                           detail.uploadBytes + detail.downloadBytes,
                         )}
@@ -1618,8 +1635,8 @@ export default function SubscriptionPage() {
                       <Button
                         className="w-full"
                         color="primary"
-                        startContent={<Copy className="h-4 w-4" />}
-                        variant="flat"
+                        size="sm"
+                        startContent={<Copy className="h-3.5 w-3.5" />}
                         onPress={() => copyText(url(detail), "订阅链接已复制")}
                       >
                         复制订阅链接（自动识别客户端）
@@ -1636,7 +1653,10 @@ export default function SubscriptionPage() {
                       />
                       <div className="space-y-1 text-xs leading-relaxed text-default-500">
                         <p>
-                          点客户端直接导入，右侧按钮复制链接
+                          点客户端直接导入
+                          <span className="hidden sm:inline">
+                            ，右侧按钮复制该客户端的链接
+                          </span>
                           {detail.options.rules &&
                             "；已开分流：Shadowrocket、Loon、Quantumult X 导入完整配置，会替换 App 原来的配置"}
                         </p>

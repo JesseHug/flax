@@ -1,10 +1,24 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import { motion } from "framer-motion";
-import { LogOut, UserRound } from "lucide-react";
+import {
+  ArrowDownToLine,
+  ChevronsLeft,
+  ChevronsRight,
+  Globe,
+  LayoutGrid,
+  LineChart,
+  Link2,
+  LogOut,
+  Menu,
+  Rss,
+  Server,
+  Settings,
+  Share2,
+  UserRound,
+  Users,
+} from "lucide-react";
 
-import { Button } from "@/shadcn-bridge/heroui/button";
 import { BrandLogo } from "@/components/brand-logo";
 import { VersionFooter } from "@/components/version-footer";
 import { getMonitorAccess } from "@/api";
@@ -49,37 +63,19 @@ export default function AdminLayout({
   const menuItems: MenuItem[] = [
     {
       path: "/dashboard",
-      label: "仪表",
-      adminLabel: "概览",
-      icon: (
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-        </svg>
-      ),
+      label: "概览",
+      icon: <LayoutGrid className="h-4 w-4" strokeWidth={1.75} />,
     },
     {
       path: "/forward",
       label: "规则",
-      icon: (
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path
-            clipRule="evenodd"
-            d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-            fillRule="evenodd"
-          />
-        </svg>
-      ),
+      icon: <ArrowDownToLine className="h-4 w-4" strokeWidth={1.75} />,
       userOnly: true,
     },
     {
       path: "/my-subscriptions",
       label: "订阅",
-      icon: (
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M5 3a1 1 0 000 2c5.523 0 10 4.477 10 10a1 1 0 102 0C17 8.373 11.627 3 5 3z" />
-          <path d="M4 9a1 1 0 011-1 7 7 0 017 7 1 1 0 11-2 0 5 5 0 00-5-5 1 1 0 01-1-1zM3 15a2 2 0 114 0 2 2 0 01-4 0z" />
-        </svg>
-      ),
+      icon: <Rss className="h-4 w-4" strokeWidth={1.75} />,
       // Shown once the user has subscriptions assigned.
       userOnly: true,
     },
@@ -87,65 +83,32 @@ export default function AdminLayout({
       path: "/node",
       section: "线路",
       label: "服务器",
-      icon: (
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path
-            clipRule="evenodd"
-            d="M2 5a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm14 1a1 1 0 11-2 0 1 1 0 012 0zM2 13a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2zm14 1a1 1 0 11-2 0 1 1 0 012 0z"
-            fillRule="evenodd"
-          />
-        </svg>
-      ),
+      icon: <Server className="h-4 w-4" strokeWidth={1.75} />,
       adminOnly: true,
     },
     {
       path: "/inbound",
       label: "节点",
-      icon: (
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path
-            clipRule="evenodd"
-            d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.498-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-2.783 4.118zm-6.268 0C6.412 13.97 6.118 12.546 6.03 11H4.083a6.004 6.004 0 002.783 4.118z"
-            fillRule="evenodd"
-          />
-        </svg>
-      ),
+      icon: <Globe className="h-4 w-4" strokeWidth={1.75} />,
       adminOnly: true,
     },
     {
       path: "/relay",
       label: "中转",
-      icon: (
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path
-            clipRule="evenodd"
-            d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z"
-            fillRule="evenodd"
-          />
-        </svg>
-      ),
+      icon: <Link2 className="h-4 w-4" strokeWidth={1.75} />,
       adminOnly: true,
     },
     {
       path: "/subscription",
       section: "分发",
       label: "订阅",
-      icon: (
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M5 3a1 1 0 000 2c5.523 0 10 4.477 10 10a1 1 0 102 0C17 8.373 11.627 3 5 3z" />
-          <path d="M4 9a1 1 0 011-1 7 7 0 017 7 1 1 0 11-2 0 5 5 0 00-5-5 1 1 0 01-1-1zM3 15a2 2 0 114 0 2 2 0 01-4 0z" />
-        </svg>
-      ),
+      icon: <Rss className="h-4 w-4" strokeWidth={1.75} />,
       adminOnly: true,
     },
     {
       path: "/user",
       label: "用户",
-      icon: (
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-        </svg>
-      ),
+      icon: <Users className="h-4 w-4" strokeWidth={1.75} />,
       adminOnly: true,
     },
     {
@@ -154,38 +117,18 @@ export default function AdminLayout({
       userOnly: true,
       section: "系统",
       label: "监控",
-      icon: (
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path
-            clipRule="evenodd"
-            d="M3 3a1 1 0 000 2v11a1 1 0 001 1h13a1 1 0 100-2H5V5a1 1 0 00-1-1H3zm13.707 4.293a1 1 0 00-1.414 0L12 10.586 10.707 9.293a1 1 0 00-1.414 0L7 11.586l-1.293-1.293a1 1 0 10-1.414 1.414l2 2a1 1 0 001.414 0L10 11.414l1.293 1.293a1 1 0 001.414 0l3-3a1 1 0 000-1.414z"
-            fillRule="evenodd"
-          />
-        </svg>
-      ),
+      icon: <LineChart className="h-4 w-4" strokeWidth={1.75} />,
     },
     {
       path: "/panel-sharing",
       label: "共享",
-      icon: (
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
-        </svg>
-      ),
+      icon: <Share2 className="h-4 w-4" strokeWidth={1.75} />,
       adminOnly: true,
     },
     {
       path: "/config",
       label: "设置",
-      icon: (
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path
-            clipRule="evenodd"
-            d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z"
-            fillRule="evenodd"
-          />
-        </svg>
-      ),
+      icon: <Settings className="h-4 w-4" strokeWidth={1.75} />,
       adminOnly: true,
     },
   ];
@@ -309,46 +252,42 @@ export default function AdminLayout({
 
   return (
     <div
-      className={`flex ${isMobile ? "min-h-screen p-0" : "h-screen p-6 gap-6 [@media(max-height:760px)]:p-4 [@media(max-height:760px)]:gap-4"} bg-mesh-gradient overflow-hidden`}
+      className={`flex bg-background ${isMobile ? "min-h-screen" : "h-screen overflow-hidden"}`}
     >
       {/* 移动端遮罩层 */}
       {isMobile && mobileMenuVisible && (
         <button
           aria-label="关闭菜单"
-          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
+          className="fixed inset-0 z-40 bg-black/40"
           type="button"
           onClick={hideMobileMenu}
         />
       )}
 
-      {/* 左侧菜单栏 */}
+      {/* 左侧菜单栏：贴边平铺，只用一条细线和内容区分开 */}
       <aside
         className={`
-        ${isMobile ? "fixed h-screen top-0 left-0 rounded-r-3xl" : "relative h-full rounded-3xl"}
+        ${isMobile ? "fixed top-0 left-0 h-screen" : "relative h-full"}
         ${isMobile && !mobileMenuVisible ? "-translate-x-full" : "translate-x-0"}
-        ${isMobile ? "w-64" : isCollapsed ? "w-20" : "w-[260px]"}
-        bg-white/70 dark:bg-zinc-900/70 backdrop-blur-3xl
-        shadow-[0_10px_30px_rgba(0,0,0,0.1)]
-        border border-white/80 dark:border-white/10
-        z-50
-        transition-all duration-300 ease-in-out
-        flex flex-col flex-shrink-0      `}
+        ${isMobile ? "w-60" : isCollapsed ? "w-16" : "w-56"}
+        z-50 flex flex-shrink-0 flex-col border-r border-divider bg-background
+        transition-[width,transform] duration-200`}
       >
         {/* Logo 区域 */}
-        <div className="px-6 py-6 [@media(max-height:760px)]:py-4 flex items-center overflow-hidden whitespace-nowrap box-border">
-          <BrandLogo className="h-10 w-10 flex-shrink-0 rounded-xl" size={40} />
-          <div
-            className={`transition-all duration-300 overflow-hidden ${isCollapsed ? "max-w-0 opacity-0 ml-0" : "max-w-[180px] opacity-100 ml-3"}`}
-          >
-            <h1 className="text-xl font-bold text-foreground overflow-hidden whitespace-nowrap text-ellipsis">
+        <div
+          className={`flex h-14 items-center overflow-hidden whitespace-nowrap ${isCollapsed ? "justify-center px-0" : "px-5"}`}
+        >
+          <BrandLogo className="h-6 w-6 flex-shrink-0" size={24} />
+          {!isCollapsed && (
+            <span className="ml-2.5 truncate text-[15px] font-semibold text-foreground">
               {siteConfig.name}
-            </h1>
-          </div>
+            </span>
+          )}
         </div>
 
         {/* 菜单导航 */}
-        <nav className="flex-1 px-4 overflow-y-auto overflow-x-hidden scrollbar-hide">
-          <ul className="space-y-1">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 scrollbar-hide">
+          <ul className="space-y-0.5">
             {filteredMenuItems.map((item) => {
               const isActive =
                 location.pathname === item.path ||
@@ -365,27 +304,20 @@ export default function AdminLayout({
                   {isAdmin &&
                     item.section &&
                     (isCollapsed ? (
-                      <div className="mx-3 my-2 border-t border-default-200/70" />
+                      <div className="mx-2 my-2 border-t border-divider" />
                     ) : (
-                      <div className="px-3 pb-1 pt-3 text-[11px] font-medium tracking-wide text-default-400 [@media(max-height:760px)]:pt-2">
+                      <div className="px-2 pb-1 pt-4 text-xs text-default-400">
                         {item.section}
                       </div>
                     ))}
-                  <motion.button
+                  <button
+                    aria-current={isActive ? "page" : undefined}
                     aria-disabled={isMonitorBlocked}
-                    className={`
-                       w-full flex items-center px-3 py-2.5 rounded-2xl text-left
-                       relative min-h-[44px] overflow-hidden transition-colors
-                       [@media(max-height:760px)]:min-h-[38px] [@media(max-height:760px)]:py-2
-                       ${isMonitorBlocked ? "opacity-60" : ""}
-                       ${
-                         isActive
-                           ? "text-primary dark:text-primary-400 font-semibold"
-                           : isMonitorBlocked
-                             ? "text-gray-500 dark:text-gray-400 font-medium"
-                             : "text-gray-600 dark:text-gray-300 font-medium"
-                       }
-                     `}
+                    className={`flex h-9 w-full items-center rounded-md text-left text-sm transition-colors ${isCollapsed ? "justify-center" : "gap-2.5 px-2"} ${
+                      isActive
+                        ? "bg-default-100 font-medium text-foreground"
+                        : "text-default-500 hover:bg-default-50 hover:text-foreground"
+                    } ${isMonitorBlocked ? "opacity-50" : ""}`}
                     title={
                       isCollapsed
                         ? isMonitorBlocked
@@ -393,131 +325,76 @@ export default function AdminLayout({
                           : item.label
                         : undefined
                     }
-                    transition={{ duration: 0.15 }}
+                    type="button"
                     onClick={() => handleMenuClick(item.path)}
                   >
-                    {isActive && (
-                      <motion.div
-                        className="absolute inset-0 rounded-2xl bg-white/60 dark:bg-white/10 backdrop-blur-xl shadow-[0_12px_36px_rgba(0,0,0,0.18)] border border-white dark:border-white/20"
-                        layoutId="sidebar-active"
-                        transition={{
-                          type: "spring",
-                          stiffness: 380,
-                          damping: 30,
-                        }}
-                      />
-                    )}
-                    {!isActive && (
-                      <motion.div
-                        className="absolute inset-0 rounded-2xl bg-white/40 dark:bg-white/5 opacity-0"
-                        transition={{ duration: 0.15 }}
-                        whileHover={{ opacity: 1 }}
-                      />
-                    )}
-                    <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center relative z-10">
+                    <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center">
                       {item.icon}
-                    </div>
-                    <div
-                      className={`transition-all duration-300 overflow-hidden flex items-center ${isCollapsed ? "max-w-0 opacity-0 ml-0" : "max-w-[200px] opacity-100 ml-3"}`}
-                    >
-                      <span className="relative z-10 whitespace-nowrap">
-                        {item.label}
-                      </span>
-                    </div>
-                  </motion.button>
+                    </span>
+                    {!isCollapsed && (
+                      <span className="truncate">{item.label}</span>
+                    )}
+                  </button>
                 </li>
               );
             })}
           </ul>
         </nav>
 
-        {/* 底部账号操作、版权信息和折叠按钮 */}
-        <div className="px-5 py-4 [@media(max-height:760px)]:py-3 [@media(max-height:760px)]:gap-2 mt-auto flex-shrink-0 flex flex-col gap-3 overflow-hidden whitespace-nowrap box-border">
-          {!isMobile && (
-            <div className="flex flex-col gap-1">
-              {[
-                // Password, passkeys and GitHub live on the account page.
-                {
-                  key: "account",
-                  label: "账户与登录",
-                  icon: UserRound,
-                  onPress: () => navigate("/profile"),
-                },
-                {
-                  key: "logout",
-                  label: "退出登录",
-                  icon: LogOut,
-                  onPress: handleLogout,
-                },
-              ].map((a) => (
-                <button
-                  key={a.key}
-                  className={`flex h-9 [@media(max-height:760px)]:h-8 items-center rounded-xl text-sm text-default-500 transition-colors hover:bg-default-100 hover:text-foreground ${isCollapsed ? "justify-center px-0" : "gap-3 px-3"}`}
-                  title={a.label}
-                  type="button"
-                  onClick={a.onPress}
-                >
-                  <a.icon className="h-4 w-4 shrink-0" />
-                  {!isCollapsed && <span>{a.label}</span>}
-                </button>
-              ))}
-            </div>
-          )}
-          {/* Version and the collapse button share a row so short
-              laptop screens still fit the whole menu. */}
+        {/* 底部：账号、退出、版本和折叠 */}
+        <div className="mt-auto flex flex-shrink-0 flex-col gap-1 overflow-hidden whitespace-nowrap px-3 py-3">
+          {!isMobile &&
+            [
+              // Password, passkeys and GitHub live on the account page.
+              {
+                key: "account",
+                label: "账户与登录",
+                icon: UserRound,
+                onPress: () => navigate("/profile"),
+              },
+              {
+                key: "logout",
+                label: "退出登录",
+                icon: LogOut,
+                onPress: handleLogout,
+              },
+            ].map((a) => (
+              <button
+                key={a.key}
+                className={`flex h-8 items-center rounded-md text-sm text-default-500 transition-colors hover:bg-default-50 hover:text-foreground ${isCollapsed ? "justify-center" : "gap-2.5 px-2"}`}
+                title={a.label}
+                type="button"
+                onClick={a.onPress}
+              >
+                <a.icon className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+                {!isCollapsed && <span>{a.label}</span>}
+              </button>
+            ))}
           <div
-            className={`flex items-center ${isCollapsed ? "justify-center" : "justify-between gap-2"}`}
+            className={`mt-2 flex items-center ${isCollapsed ? "justify-center" : "justify-between gap-2 pl-2"}`}
           >
-            <div
-              className={`min-w-0 transition-all duration-300 overflow-hidden flex items-center ${isCollapsed ? "max-w-0 opacity-0 hidden" : "max-w-[200px] opacity-100"}`}
-            >
+            {!isCollapsed && (
               <VersionFooter
-                poweredClassName="text-xs text-gray-400 dark:text-gray-500"
-                updateBadgeClassName="ml-2 inline-flex items-center rounded-full bg-rose-500/90 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-white"
+                containerClassName="min-w-0"
+                poweredClassName="hidden"
+                updateBadgeClassName="ml-1.5 text-foreground"
                 version={siteConfig.version}
-                versionClassName="text-xs text-gray-400 dark:text-gray-500"
+                versionClassName="truncate text-xs text-default-400"
               />
-            </div>
-
-            {/* 桌面端折叠按钮 */}
+            )}
             {!isMobile && (
-              <Button
-                isIconOnly
-                className="flex-shrink-0 text-gray-400 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-300 min-w-0 w-9 h-9 rounded-full"
-                size="sm"
-                variant="light"
-                onPress={toggleCollapse}
+              <button
+                aria-label={isCollapsed ? "展开菜单" : "收起菜单"}
+                className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-default-400 transition-colors hover:bg-default-50 hover:text-foreground"
+                type="button"
+                onClick={toggleCollapse}
               >
                 {isCollapsed ? (
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      d="M13 5l7 7-7 7M5 5l7 7-7 7"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                    />
-                  </svg>
+                  <ChevronsRight className="h-4 w-4" />
                 ) : (
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                    />
-                  </svg>
+                  <ChevronsLeft className="h-4 w-4" />
                 )}
-              </Button>
+              </button>
             )}
           </div>
         </div>
@@ -525,45 +402,25 @@ export default function AdminLayout({
 
       {/* 主内容区域 */}
       <div
-        className={`flex flex-col flex-1 ${isMobile ? "min-h-0" : "h-full overflow-hidden"} relative`}
+        className={`relative flex flex-1 flex-col ${isMobile ? "min-h-0" : "h-full overflow-hidden"}`}
       >
-        {/* 移动端菜单按钮 (替代Header) */}
         {isMobile && (
-          <Button
-            isIconOnly
-            className="absolute top-4 left-4 z-40 bg-white/20 dark:bg-zinc-900/20 backdrop-blur-md shadow-sm border border-white/80 dark:border-white/10"
-            variant="flat"
-            onPress={toggleMobileMenu}
-          >
-            <svg
-              className="w-5 h-5 text-foreground"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <header className="flex h-12 items-center gap-2 border-b border-divider px-3">
+            <button
+              aria-label="打开菜单"
+              className="flex h-8 w-8 items-center justify-center rounded-md text-foreground hover:bg-default-100"
+              type="button"
+              onClick={toggleMobileMenu}
             >
-              <path
-                d="M4 6h16M4 12h16M4 18h16"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-              />
-            </svg>
-          </Button>
+              <Menu className="h-5 w-5" strokeWidth={1.75} />
+            </button>
+            <BrandLogo className="h-5 w-5" size={20} />
+            <span className="text-sm font-semibold">{siteConfig.name}</span>
+          </header>
         )}
 
-        {/* 主内容 */}
         <main ref={mainRef} className="flex-1 overflow-y-auto scrollbar-hide">
-          {/* Enter animation only: an exit animation would hold the next
-              page back until the old one is gone. */}
-          <motion.div
-            key={location.pathname}
-            animate={{ opacity: 1, y: 0 }}
-            className="h-full"
-            initial={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
-          >
-            {children}
-          </motion.div>
+          <div className="mx-auto h-full w-full max-w-6xl">{children}</div>
         </main>
       </div>
     </div>

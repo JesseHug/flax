@@ -41,7 +41,6 @@ export default function NodeHubPage() {
   const [install, setInstall] = useState<InstallRequest | null>(
     state.install ?? null,
   );
-  const [addNode, setAddNode] = useState(0);
   // A node's 监控 replaces the list; the list stays mounted underneath.
   const [monitorNode, setMonitorNode] = useState<number | null>(null);
 
@@ -61,22 +60,12 @@ export default function NodeHubPage() {
   }, [location.state, location.pathname, navigate]);
 
   return (
-    <AnimatedPage className="px-3 py-6 lg:px-6">
+    <AnimatedPage className="px-4 py-6 lg:px-10 lg:py-8">
       <PageHeader
         description={
           tab === "kernels"
             ? "服务器上安装的 Xray / sing-box / Snell 等内核，节点（入站）跑在内核上"
             : "装了 agent 的服务器：实时状态、监控和管理都在这里"
-        }
-        // The kernel tab has its own 安装内核 button.
-        primary={
-          tab === "nodes" && monitorNode === null
-            ? {
-                key: "add",
-                label: "新建服务器",
-                onPress: () => setAddNode((n) => n + 1),
-              }
-            : undefined
         }
         title="服务器"
       />
@@ -106,7 +95,6 @@ export default function NodeHubPage() {
             <NodePage
               embedded
               active={monitorNode === null}
-              addRequest={addNode}
               onOpenMonitor={setMonitorNode}
             />
           </div>

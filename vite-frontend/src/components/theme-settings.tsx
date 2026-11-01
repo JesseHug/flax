@@ -18,10 +18,10 @@ import { useThemeContext } from "@/themes/context";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const MODE_OPTIONS: Array<{ value: ThemeMode; label: string; icon: string }> = [
-  { value: "light", label: "亮色", icon: "☀️" },
-  { value: "dark", label: "暗色", icon: "🌙" },
-  { value: "system", label: "跟随系统", icon: "🖥️" },
+const MODE_OPTIONS: Array<{ value: ThemeMode; label: string }> = [
+  { value: "light", label: "亮色" },
+  { value: "dark", label: "暗色" },
+  { value: "system", label: "跟随系统" },
 ];
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -57,7 +57,7 @@ export const ThemeSettings: React.FC = () => {
   };
 
   return (
-    <Card className="shadow-md">
+    <Card>
       <CardBody className="p-6">
         <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-5">
           主题设置
@@ -65,22 +65,19 @@ export const ThemeSettings: React.FC = () => {
 
         {/* ── Mode toggle ────────────────────────────────────── */}
         <div className="mb-6">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-            外观模式
-          </p>
-          <div className="inline-flex rounded-lg border border-gray-200 dark:border-gray-600 p-1 gap-1">
+          <p className="mb-2 text-sm">外观模式</p>
+          <div className="inline-flex gap-1">
             {MODE_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
                   mode === opt.value
-                    ? "bg-primary text-white shadow-sm"
-                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50"
+                    ? "bg-default-100 font-medium text-foreground"
+                    : "text-default-500 hover:text-foreground"
                 }`}
                 type="button"
                 onClick={() => handleModeChange(opt.value)}
               >
-                <span className="mr-1.5">{opt.icon}</span>
                 {opt.label}
               </button>
             ))}
@@ -89,9 +86,9 @@ export const ThemeSettings: React.FC = () => {
 
         {/* ── Theme grid ─────────────────────────────────────── */}
         <div className="mb-4">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+          <p className="mb-2 text-sm">
             选择主题
-            <span className="ml-2 text-xs text-gray-400 dark:text-gray-500 font-normal">
+            <span className="ml-2 text-xs text-default-400">
               共 {themes.length} 个可用主题
             </span>
           </p>
@@ -114,10 +111,10 @@ export const ThemeSettings: React.FC = () => {
               return (
                 <button
                   key={theme.id}
-                  className={`relative rounded-xl text-left transition-all duration-200 border-2 overflow-hidden ${
+                  className={`relative overflow-hidden rounded-lg border text-left transition-colors ${
                     isActive
-                      ? "border-primary shadow-lg shadow-primary/15 scale-[1.01]"
-                      : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 hover:shadow-md"
+                      ? "border-foreground"
+                      : "border-divider hover:bg-default-50"
                   }`}
                   type="button"
                   onClick={() => handleThemeSelect(theme.id)}
@@ -161,7 +158,7 @@ export const ThemeSettings: React.FC = () => {
 
                   {/* Active indicator dot */}
                   {isActive && (
-                    <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-primary shadow-sm shadow-primary/50 animate-pulse" />
+                    <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-foreground" />
                   )}
                 </button>
               );

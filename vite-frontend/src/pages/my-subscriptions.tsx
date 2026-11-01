@@ -44,18 +44,18 @@ function status(s: UserSubscription): [string, string] {
 
   switch (s.status) {
     case "disabled":
-      return ["已停用", "bg-default-200 text-default-600"];
+      return ["已停用", "text-default-400"];
     case "expired":
-      return ["已到期", "bg-rose-500/15 text-rose-600"];
+      return ["已到期", "text-danger"];
     case "over_quota":
-      return ["流量已用完", "bg-rose-500/15 text-rose-600"];
+      return ["流量已用完", "text-danger"];
   }
   if (s.trafficLimit && used >= s.trafficLimit * 0.9) {
-    return ["流量快用完", "bg-amber-500/15 text-amber-600"];
+    return ["流量快用完", "text-warning-600"];
   }
-  if (left < 3 * DAY) return ["快到期", "bg-amber-500/15 text-amber-600"];
+  if (left < 3 * DAY) return ["快到期", "text-warning-600"];
 
-  return ["正常", "bg-emerald-500/15 text-emerald-600"];
+  return ["正常", "text-default-400"];
 }
 
 function expiryText(s: UserSubscription) {
@@ -68,42 +68,38 @@ function expiryText(s: UserSubscription) {
   return ymd(s.expireTime);
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0 rounded-xl bg-default-100 px-3 py-2">
-      <div className="text-xs text-default-500">{label}</div>
-      <div className="truncate font-semibold">{value}</div>
-    </div>
-  );
-}
-
 function Traffic({ s }: { s: UserSubscription }) {
   const used = s.uploadBytes + s.downloadBytes;
   const pct = s.trafficLimit ? Math.min(100, (used / s.trafficLimit) * 100) : 0;
   const tone =
-    pct >= 100 ? "bg-danger" : pct >= 90 ? "bg-warning" : "bg-success";
+    pct >= 100 ? "bg-danger" : pct >= 90 ? "bg-warning" : "bg-foreground";
 
   return (
     <div className="space-y-1.5">
-      <div className="flex items-baseline justify-between gap-2 text-xs text-default-500">
-        <span className="font-mono">
-          {ymd(s.trafficSince)} 起已用 {formatTraffic(used)}
-          {s.trafficLimit
-            ? ` / ${formatTraffic(s.trafficLimit)}`
-            : " · 不限流量"}
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-2xl font-semibold tabular-nums tracking-tight">
+          {formatTraffic(used)}
+          <span className="ml-1 text-sm font-normal text-default-400">
+            {s.trafficLimit ? `/ ${formatTraffic(s.trafficLimit)}` : "不限流量"}
+          </span>
         </span>
-        {s.trafficLimit > 0 && <span>{Math.floor(pct)}%</span>}
+        {s.trafficLimit > 0 && (
+          <span className="text-xs tabular-nums text-default-400">
+            {Math.floor(pct)}%
+          </span>
+        )}
       </div>
       {s.trafficLimit > 0 && (
-        <div className="h-2 overflow-hidden rounded-full bg-default-200">
+        <div className="h-[3px] overflow-hidden rounded-full bg-default-100">
           <div
             className={`h-full rounded-full ${tone}`}
             style={{ width: `${Math.max(2, pct)}%` }}
           />
         </div>
       )}
-      <div className="font-mono text-xs text-default-400">
-        ↑ {formatTraffic(s.uploadBytes)} · ↓ {formatTraffic(s.downloadBytes)}
+      <div className="text-xs tabular-nums text-default-400">
+        {ymd(s.trafficSince)} 起 · ↑ {formatTraffic(s.uploadBytes)} · ↓{" "}
+        {formatTraffic(s.downloadBytes)}
         {s.nextResetTime ? ` · ${ymd(s.nextResetTime)} 重置` : ""}
       </div>
     </div>
@@ -129,27 +125,23 @@ function SubscriptionCard({
   const [traffic, setTraffic] = useState(false);
 
   return (
-    <div className="space-y-4 rounded-2xl border border-divider bg-content1 p-4 shadow-sm sm:p-5">
-      <div className="flex items-center justify-between gap-2">
-        <span className="min-w-0 truncate text-lg font-bold">{s.name}</span>
-        <span
-          className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${tone}`}
-        >
-          {label}
-        </span>
-      </div>
-      <div className="grid grid-cols-3 gap-2 text-sm">
-        <Stat label="节点" value={`${s.nodeCount} 个`} />
-        <Stat label="到期" value={expiryText(s)} />
-        <Stat
-          label="每月重置"
-          value={s.resetDay ? `${s.resetDay} 号` : "不重置"}
-        />
+    <section className="space-y-4 py-6 first:pt-0">
+      <div>
+        <div className="flex items-baseline justify-between gap-2">
+          <h2 className="min-w-0 truncate text-base font-semibold">{s.name}</h2>
+          <span className={`shrink-0 text-xs ${tone}`}>{label}</span>
+        </div>
+        <p className="mt-0.5 text-xs text-default-400">
+          {s.nodeCount} 个节点 · {expiryText(s)}
+          {s.expireTime && expiryText(s) === ymd(s.expireTime) ? " 到期" : ""}
+          {" · "}
+          {s.resetDay ? `每月 ${s.resetDay} 号重置` : "不自动重置"}
+        </p>
       </div>
       <Traffic s={s} />
       <button
         aria-expanded={traffic}
-        className="flex w-full items-center justify-between text-sm font-medium text-default-600"
+        className="flex w-full items-center justify-between border-t border-divider pt-3 text-sm text-default-500 hover:text-foreground"
         type="button"
         onClick={() => setTraffic(!traffic)}
       >
@@ -170,7 +162,7 @@ function SubscriptionCard({
       )}
       {onToggle && (
         <button
-          className="flex w-full items-center justify-between text-sm font-medium text-default-600"
+          className="flex w-full items-center justify-between border-t border-divider pt-3 text-sm text-default-500 hover:text-foreground"
           type="button"
           onClick={onToggle}
         >
@@ -183,7 +175,7 @@ function SubscriptionCard({
       {open && (
         <div className="space-y-3">
           {!onToggle && (
-            <div className="text-sm font-medium text-default-600">
+            <div className="border-t border-divider pt-3 text-sm text-default-500">
               导入客户端
             </div>
           )}
@@ -193,8 +185,11 @@ function SubscriptionCard({
             name={s.name}
             rules={s.rules}
           />
-          <p className="text-center text-xs text-default-400">
-            点客户端直接导入，右侧按钮复制链接
+          <p className="text-xs text-default-400">
+            点客户端直接导入
+            <span className="hidden sm:inline">
+              ，右侧按钮复制该客户端的链接
+            </span>
           </p>
         </div>
       )}
@@ -202,25 +197,33 @@ function SubscriptionCard({
         <Button
           className="flex-1"
           color="primary"
-          startContent={<Copy className="h-4 w-4" />}
-          variant="flat"
+          size="sm"
+          startContent={<Copy className="h-3.5 w-3.5" />}
           onPress={() => copyText(link(s), "订阅链接已复制")}
         >
           复制订阅链接
         </Button>
-        <Button isIconOnly aria-label="二维码" variant="flat" onPress={onQr}>
+        <Button
+          isIconOnly
+          aria-label="二维码"
+          size="sm"
+          title="二维码"
+          variant="bordered"
+          onPress={onQr}
+        >
           <QrCode className="h-4 w-4" />
         </Button>
         <Button
-          color="danger"
-          startContent={<RefreshCw className="h-4 w-4" />}
-          variant="flat"
+          className="text-danger"
+          size="sm"
+          startContent={<RefreshCw className="h-3.5 w-3.5" />}
+          variant="light"
           onPress={onReset}
         >
           重置链接
         </Button>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -294,7 +297,7 @@ export default function MySubscriptionsPage() {
   const several = items.length > 1;
 
   return (
-    <AnimatedPage className="space-y-4 px-3 py-6 lg:px-6">
+    <AnimatedPage className="px-4 py-6 lg:px-10 lg:py-8">
       <PageHeader
         description="管理员分配给你的订阅：一键导入客户端，查看流量和到期时间"
         title="我的订阅"
@@ -302,7 +305,7 @@ export default function MySubscriptionsPage() {
       {items.length === 0 ? (
         <EmptyHint text="还没有分配给你的订阅，请联系管理员" />
       ) : (
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div className="max-w-2xl divide-y divide-divider">
           {items.map((s) => (
             <SubscriptionCard
               key={s.id}

@@ -89,8 +89,12 @@ export function VersionFooter({
       <p className={versionClassName}>
         v{version}
         {updateAvailable && latestUpdateVersion && (
-          <span className={updateBadgeClassName} role="status">
-            {latestUpdateVersion}
+          <span
+            className={updateBadgeClassName}
+            role="status"
+            title={`有新版本 ${latestUpdateVersion}`}
+          >
+            可升级 {latestUpdateVersion}
           </span>
         )}
       </p>

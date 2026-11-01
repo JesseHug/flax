@@ -13,7 +13,7 @@ export function DemoBanner() {
   if (!open) {
     return (
       <button
-        className="fixed bottom-[84px] right-3 z-[60] rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-white shadow-lg lg:bottom-4"
+        className="fixed bottom-[84px] right-3 z-[60] rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground lg:bottom-4"
         type="button"
         onClick={() => setOpen(true)}
       >
@@ -48,7 +48,7 @@ export function DemoBanner() {
           {role === "admin" ? "看普通用户视角" : "回到管理员视角"}
         </button>
         <a
-          className="flex flex-1 items-center justify-center rounded-lg bg-primary px-2 py-1.5 font-medium text-white"
+          className="flex flex-1 items-center justify-center rounded-lg bg-primary px-2 py-1.5 font-medium text-primary-foreground"
           href={DOCS}
           rel="noreferrer"
           target="_blank"

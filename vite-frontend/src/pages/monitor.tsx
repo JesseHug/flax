@@ -213,17 +213,19 @@ function MonitorOverview() {
   ];
 
   return (
-    <AnimatedPage className="px-3 lg:px-6 py-6">
+    <AnimatedPage className="px-4 py-6 lg:px-10 lg:py-8">
       <PageHeader description="服务器资源与隧道质量的实时状态" title="监控" />
 
-      <div className="mb-4 grid grid-cols-3 gap-2 sm:max-w-2xl">
+      <div className="mb-8 grid grid-cols-3 gap-px overflow-hidden rounded-lg border border-divider bg-divider">
         {stats.map((s) => (
           <div
             key={s.key}
-            className="min-w-0 rounded-xl border border-divider bg-content1 px-3 py-2"
+            className="min-w-0 bg-background px-3 py-3 lg:px-5 lg:py-4"
           >
-            <div className="truncate text-xs text-default-500">{s.label}</div>
-            <div className="truncate font-mono text-sm font-semibold sm:text-base">
+            <div className="truncate text-xs text-default-500 lg:text-sm">
+              {s.label}
+            </div>
+            <div className="mt-1 truncate text-lg font-semibold tabular-nums tracking-tight lg:text-2xl">
               {s.value}
             </div>
           </div>
@@ -241,7 +243,7 @@ function MonitorOverview() {
       <PageToolbar view={{ value: viewMode, onChange: setViewMode }} />
 
       {nodesError && activeTab === "nodes" && (
-        <div className="mb-3 rounded-xl border border-divider bg-content1 px-3 py-2 text-sm text-default-600">
+        <div className="mb-3 border-b border-divider py-2 text-sm text-default-500">
           {nodesError}
         </div>
       )}

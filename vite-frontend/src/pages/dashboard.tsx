@@ -1,45 +1,29 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
 
 import { copyWithToast } from "@/utils/clipboard";
 import { AnimatedPage } from "@/components/animated-page";
-import { Card, CardBody, CardHeader } from "@/shadcn-bridge/heroui/card";
 import { Button } from "@/shadcn-bridge/heroui/button";
-import {
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
-} from "@/shadcn-bridge/heroui/dropdown";
 import {
   Modal,
   ModalContent,
   ModalHeader,
   ModalBody,
 } from "@/shadcn-bridge/heroui/modal";
-import { PageEmptyState, PageLoadingState } from "@/components/page-state";
+import { PageLoadingState } from "@/components/page-state";
 import { AnnouncementBanner } from "@/pages/dashboard/components/announcement-banner";
 import { AnnouncementModal } from "@/pages/dashboard/components/announcement-modal";
 import { FlowChartCard } from "@/components/lazy-charts";
-import { MetricCard } from "@/pages/dashboard/components/metric-card";
 import { getAdminFlag, getSessionName } from "@/utils/session";
 import { AdminOverview } from "@/pages/dashboard/admin-overview";
-import { safeLogout } from "@/utils/logout";
 import {
   formatTraffic,
   formatFlowLimit,
   flowLimitBytes,
 } from "@/utils/traffic";
 import {
-  formatNodeRenewalTime,
-  getNodeRenewalCycleLabel,
-  getNodeRenewalSnapshot,
-} from "@/pages/node/renewal";
-import {
   useDashboardData,
   type DashboardForward as Forward,
-  type DashboardNodeExpiryItem,
   type DashboardUserTunnel as UserTunnel,
 } from "@/pages/dashboard/use-dashboard-data";
 
@@ -56,13 +40,7 @@ export default function DashboardPage() {
 }
 
 function UserDashboard() {
-  const navigate = useNavigate();
   const username = getSessionName() || "User";
-
-  const handleLogout = () => {
-    safeLogout();
-    toast.success("已退出登录");
-  };
 
   const {
     loading,
@@ -70,7 +48,6 @@ function UserDashboard() {
     userTunnels,
     forwardList,
     statisticsFlows,
-    nodeExpiryReminders,
     isAdmin,
     announcement,
     isAnnouncementModalOpen,
@@ -91,99 +68,6 @@ function UserDashboard() {
     }
 
     return value.toString();
-  };
-
-  const getNodeExpiryStatus = (
-    nextDueTime?: number,
-    renewalState: "unset" | "expired" | "dueSoon" | "scheduled" = "unset",
-  ) => {
-    if (!nextDueTime || renewalState === "unset") {
-      return {
-        label: "未设置",
-        badgeClassName:
-          "bg-default-100 text-default-700 dark:bg-default-50 dark:text-default-300",
-        nextDueTime: undefined as number | undefined,
-      };
-    }
-
-    const diffDays = Math.ceil(
-      (nextDueTime - Date.now()) / (1000 * 60 * 60 * 24),
-    );
-
-    if (renewalState === "expired" || diffDays <= 0) {
-      return {
-        label: "已逾期",
-        badgeClassName:
-          "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300",
-        nextDueTime,
-      };
-    }
-
-    if (diffDays === 1) {
-      return {
-        label: "明天到期",
-        badgeClassName:
-          "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300",
-        nextDueTime,
-      };
-    }
-
-    return {
-      label: `${diffDays}天后到期`,
-      badgeClassName:
-        diffDays <= 7
-          ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300"
-          : "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300",
-      nextDueTime,
-    };
-  };
-
-  const renderNodeExpiryCard = (node: DashboardNodeExpiryItem) => {
-    const renewalSnapshot = getNodeRenewalSnapshot(
-      node.expiryTime,
-      node.renewalCycle,
-    );
-    const expiryStatus = getNodeExpiryStatus(
-      renewalSnapshot.nextDueTime,
-      renewalSnapshot.state,
-    );
-
-    return (
-      <div
-        key={node.id}
-        className="rounded-xl border border-amber-200/80 bg-gradient-to-br from-amber-50 via-white to-orange-50 p-4 shadow-sm dark:border-amber-500/20 dark:from-amber-950/20 dark:via-background dark:to-orange-950/10"
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="text-sm font-semibold text-foreground truncate">
-              {node.name}
-            </div>
-            <div className="mt-1 text-xs text-default-500">
-              服务器 ID: {node.id}
-            </div>
-          </div>
-          <span
-            className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${expiryStatus.badgeClassName}`}
-          >
-            {expiryStatus.label}
-          </span>
-        </div>
-
-        <div className="mt-3 text-sm text-default-700 dark:text-default-300">
-          {formatNodeRenewalTime(renewalSnapshot.nextDueTime)}
-        </div>
-
-        <div className="mt-1 text-xs text-default-500">
-          {getNodeRenewalCycleLabel(node.renewalCycle)}
-        </div>
-
-        {node.remark?.trim() && (
-          <p className="mt-3 line-clamp-2 text-xs leading-5 text-default-600 dark:text-default-400">
-            {node.remark.trim()}
-          </p>
-        )}
-      </div>
-    );
   };
 
   // 处理24小时流量统计数据
@@ -218,8 +102,8 @@ function UserDashboard() {
   const getExpStatus = (expTime?: string | number) => {
     if (!expTime)
       return {
-        color: "text-green-600 dark:text-green-400",
-        bg: "bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/20",
+        color: "text-default-400",
+        bg: "",
         text: "永久",
       };
 
@@ -228,16 +112,16 @@ function UserDashboard() {
 
     if (isNaN(expDate.getTime())) {
       return {
-        color: "text-gray-600 dark:text-gray-400",
-        bg: "bg-gray-50 dark:bg-black/10 border-gray-200 dark:border-gray-500/20",
+        color: "text-default-400",
+        bg: "",
         text: "无效",
       };
     }
 
     if (expDate < now) {
       return {
-        color: "text-red-600 dark:text-red-400",
-        bg: "bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20",
+        color: "text-danger",
+        bg: "",
         text: "已过期",
       };
     }
@@ -247,20 +131,20 @@ function UserDashboard() {
 
     if (diffDays <= 7) {
       return {
-        color: "text-red-600 dark:text-red-400",
-        bg: "bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20",
+        color: "text-danger",
+        bg: "",
         text: `${diffDays}天后过期`,
       };
     } else if (diffDays <= 30) {
       return {
-        color: "text-orange-600 dark:text-orange-400",
-        bg: "bg-orange-50 dark:bg-orange-500/10 border-orange-200 dark:border-orange-500/20",
+        color: "text-warning-600",
+        bg: "",
         text: `${diffDays}天后过期`,
       };
     } else {
       return {
-        color: "text-green-600 dark:text-green-400",
-        bg: "bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/20",
+        color: "text-default-400",
+        bg: "",
         text: `${diffDays}天后过期`,
       };
     }
@@ -294,46 +178,26 @@ function UserDashboard() {
   };
 
   const getUsageColor = (percentage: number) => {
-    if (percentage >= 90) return "bg-red-500 dark:bg-red-600";
-    if (percentage >= 70) return "bg-orange-500 dark:bg-orange-600";
+    if (percentage >= 90) return "bg-danger";
+    if (percentage >= 70) return "bg-warning";
 
-    return "bg-blue-500 dark:bg-blue-600";
+    return "bg-foreground";
   };
 
+  /** A thin usage line; nothing to draw for an unlimited quota. */
   const renderProgressBar = (
     percentage: number,
-    size: "sm" | "md" = "md",
+    _size: "sm" | "md" = "md",
     isUnlimited: boolean = false,
-  ) => {
-    const height = size === "sm" ? "h-1.5" : "h-2";
-
-    if (isUnlimited) {
-      return (
-        <div className="w-full">
-          <div
-            className={`w-full bg-gradient-to-r from-blue-200 to-purple-200 dark:from-blue-500/30 dark:to-purple-500/30 rounded-full ${height}`}
-          >
-            <div
-              className={`${height} bg-gradient-to-r from-blue-500 to-purple-500 rounded-full w-full opacity-60`}
-            />
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="w-full">
+  ) =>
+    isUnlimited ? null : (
+      <div className="h-[3px] w-full overflow-hidden rounded-full bg-default-100">
         <div
-          className={`w-full bg-gray-200 dark:bg-gray-800 rounded-full ${height}`}
-        >
-          <div
-            className={`${height} rounded-full transition-all duration-300 ${getUsageColor(percentage)}`}
-            style={{ width: `${Math.min(percentage, 100)}%` }}
-          />
-        </div>
+          className={`h-full rounded-full ${getUsageColor(percentage)}`}
+          style={{ width: `${Math.min(percentage, 100)}%` }}
+        />
       </div>
     );
-  };
 
   const calculateTunnelUsedFlow = (tunnel: UserTunnel): number => {
     if (!tunnel) return 0;
@@ -636,75 +500,10 @@ function UserDashboard() {
   }
 
   return (
-    <AnimatedPage className="px-3 lg:px-6 py-6">
-      {/* 顶部个人状态和下拉菜单 */}
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h1 className="text-lg font-semibold">概览</h1>
-          <p className="text-xs text-default-500">
-            {username}，这里是你的流量和转发规则
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Dropdown placement="bottom-end">
-            <DropdownTrigger>
-              <Button
-                isIconOnly
-                className="rounded-full w-10 h-10 min-w-0 bg-primary text-white font-bold text-sm shadow-[0_4px_12px_rgba(0,122,255,0.3)]"
-                variant="solid"
-              >
-                {username.slice(0, 2).toUpperCase()}
-              </Button>
-            </DropdownTrigger>
-            <DropdownMenu
-              aria-label="用户菜单"
-              className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-white/50 dark:border-white/10 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.1)]"
-            >
-              <DropdownItem
-                key="profile"
-                startContent={
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                    />
-                  </svg>
-                }
-                onPress={() => navigate("/profile")}
-              >
-                个人资料
-              </DropdownItem>
-              <DropdownItem
-                key="logout"
-                className="text-danger"
-                color="danger"
-                startContent={
-                  <svg
-                    className="w-4 h-4"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      clipRule="evenodd"
-                      d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z"
-                      fillRule="evenodd"
-                    />
-                  </svg>
-                }
-                onPress={handleLogout}
-              >
-                退出登录
-              </DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
-        </div>
+    <AnimatedPage className="px-4 py-6 lg:px-10 lg:py-8">
+      <div className="mb-6 flex items-baseline justify-between gap-3">
+        <h1 className="text-xl font-semibold tracking-tight">概览</h1>
+        <p className="truncate text-xs text-default-400">{username}</p>
       </div>
       {announcement && <AnnouncementBanner announcement={announcement} />}
       {announcement && (
@@ -715,132 +514,58 @@ function UserDashboard() {
           onDontShowAgain={dismissAnnouncementModal}
         />
       )}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6 lg:mb-8">
-        <MetricCard
-          icon={
-            <svg
-              aria-hidden="true"
-              className="w-4 h-4 lg:w-5 lg:h-5 text-blue-600 dark:text-blue-400"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-            </svg>
-          }
-          iconClassName="bg-blue-100 dark:bg-blue-500/20"
-          title="总流量"
-          value={formatFlowLimit(userInfo.flow, userInfo.flowMiB)}
-        />
 
-        <MetricCard
-          bottomContent={
-            <div className="mt-1">
-              {renderProgressBar(
-                calculateUsagePercentage("flow"),
-                "sm",
-                userInfo.flow === 99999 && !userInfo.flowMiB,
+      <div className="mb-8 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-divider bg-divider">
+        <div className="bg-background px-4 py-4 lg:px-5">
+          <div className="text-sm text-default-500">流量</div>
+          <div className="mt-1 text-2xl font-semibold tabular-nums tracking-tight">
+            {formatFlow(calculateUserTotalUsedFlow())}
+            <span className="block text-sm font-normal text-default-400 sm:ml-1 sm:inline">
+              / {formatFlowLimit(userInfo.flow, userInfo.flowMiB)}
+            </span>
+          </div>
+          <div className="mt-2">
+            {renderProgressBar(
+              calculateUsagePercentage("flow"),
+              "sm",
+              userInfo.flow === 99999 && !userInfo.flowMiB,
+            )}
+          </div>
+          <div className="mt-1.5 flex justify-between gap-2 text-xs text-default-400">
+            <span>
+              {userInfo.flow === 99999 && !userInfo.flowMiB
+                ? "不限流量"
+                : `已用 ${calculateUsagePercentage("flow").toFixed(1)}%`}
+            </span>
+            {userInfo.flowResetTime !== undefined &&
+              userInfo.flowResetTime !== null && (
+                <span className="truncate">
+                  {formatResetTime(userInfo.flowResetTime)}
+                </span>
               )}
-              <div className="flex items-center justify-between mt-1">
-                <p className="text-xs text-default-500 truncate">
-                  {userInfo.flow === 99999 && !userInfo.flowMiB
-                    ? "无限制"
-                    : `${calculateUsagePercentage("flow").toFixed(1)}%`}
-                </p>
-                {userInfo.flowResetTime !== undefined &&
-                  userInfo.flowResetTime !== null && (
-                    <div className="text-xs text-default-500 flex items-center gap-1">
-                      <svg
-                        aria-hidden="true"
-                        className="w-3 h-3"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          clipRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                          fillRule="evenodd"
-                        />
-                      </svg>
-                      <span className="truncate">
-                        {formatResetTime(userInfo.flowResetTime)}
-                      </span>
-                    </div>
-                  )}
-              </div>
-            </div>
-          }
-          icon={
-            <svg
-              aria-hidden="true"
-              className="w-4 h-4 lg:w-5 lg:h-5 text-green-600 dark:text-green-400"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                clipRule="evenodd"
-                d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z"
-                fillRule="evenodd"
-              />
-            </svg>
-          }
-          iconClassName="bg-green-100 dark:bg-green-500/20"
-          title="已用流量"
-          value={formatFlow(calculateUserTotalUsedFlow())}
-        />
-
-        <MetricCard
-          icon={
-            <svg
-              aria-hidden="true"
-              className="w-4 h-4 lg:w-5 lg:h-5 text-purple-600 dark:text-purple-400"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                clipRule="evenodd"
-                d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-                fillRule="evenodd"
-              />
-            </svg>
-          }
-          iconClassName="bg-purple-100 dark:bg-purple-500/20"
-          title="规则配额"
-          value={formatNumber(userInfo.num || 0)}
-        />
-
-        <MetricCard
-          bottomContent={
-            <div className="mt-1">
-              {renderProgressBar(
-                calculateUsagePercentage("forwards"),
-                "sm",
-                userInfo.num === 99999,
-              )}
-              <p className="text-xs text-default-500 mt-1 truncate">
-                {userInfo.num === 99999
-                  ? "无限制"
-                  : `${calculateUsagePercentage("forwards").toFixed(1)}%`}
-              </p>
-            </div>
-          }
-          icon={
-            <svg
-              aria-hidden="true"
-              className="w-4 h-4 lg:w-5 lg:h-5 text-orange-600 dark:text-orange-400"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                clipRule="evenodd"
-                d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z"
-                fillRule="evenodd"
-              />
-            </svg>
-          }
-          iconClassName="bg-orange-100 dark:bg-orange-500/20"
-          title="已用规则"
-          value={forwardList.length}
-        />
+          </div>
+        </div>
+        <div className="bg-background px-4 py-4 lg:px-5">
+          <div className="text-sm text-default-500">规则</div>
+          <div className="mt-1 text-2xl font-semibold tabular-nums tracking-tight">
+            {forwardList.length}
+            <span className="ml-1 text-sm font-normal text-default-400">
+              / {formatNumber(userInfo.num || 0)}
+            </span>
+          </div>
+          <div className="mt-2">
+            {renderProgressBar(
+              calculateUsagePercentage("forwards"),
+              "sm",
+              userInfo.num === 99999,
+            )}
+          </div>
+          <div className="mt-1.5 text-xs text-default-400">
+            {userInfo.num === 99999
+              ? "不限数量"
+              : `已用 ${calculateUsagePercentage("forwards").toFixed(1)}%`}
+          </div>
+        </div>
       </div>
 
       <FlowChartCard
@@ -849,330 +574,165 @@ function UserDashboard() {
         statisticsFlowsCount={statisticsFlows.length}
       />
 
-      {isAdmin && nodeExpiryReminders.length > 0 && (
-        <Card className="mb-6 lg:mb-8 border border-amber-200/80 bg-gradient-to-br from-amber-50/90 via-background to-orange-50/70 shadow-md dark:border-amber-500/20 dark:from-amber-950/10 dark:to-orange-950/10">
-          <CardHeader className="pb-3">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between w-full">
-              <div className="flex items-center gap-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
-                  <svg
-                    aria-hidden="true"
-                    className="h-5 w-5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      clipRule="evenodd"
-                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.981-1.742 2.981H4.42c-1.53 0-2.492-1.647-1.743-2.98l5.58-9.92zM11 13a1 1 0 10-2 0 1 1 0 002 0zm-1-7a1 1 0 00-1 1v3a1 1 0 102 0V7a1 1 0 00-1-1z"
-                      fillRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-lg lg:text-xl font-semibold text-foreground">
-                    服务器到期提醒
-                  </h2>
-                  <p className="text-sm text-default-500">
-                    展示 7
-                    天内需要续费或已经逾期的服务器，基于月付/季付/年付周期自动推算
-                  </p>
-                </div>
-              </div>
-              <span className="inline-flex w-fit items-center rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200/80 dark:bg-white/5 dark:text-amber-300 dark:ring-amber-500/20">
-                {nodeExpiryReminders.length} 个提醒
-              </span>
-            </div>
-          </CardHeader>
-          <CardBody className="pt-0">
-            <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-              {nodeExpiryReminders.slice(0, 6).map(renderNodeExpiryCard)}
-            </div>
-            {nodeExpiryReminders.length > 6 && (
-              <p className="mt-4 text-xs text-default-500">
-                还有 {nodeExpiryReminders.length - 6}{" "}
-                个服务器未展开显示，可前往服务器页面继续处理。
-              </p>
-            )}
-          </CardBody>
-        </Card>
-      )}
-
-      {/* 隧道权限 - 管理员不显示 */}
+      {/* 隧道权限 */}
       {!isAdmin && (
-        <Card className="mb-6 lg:mb-8">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <svg
-                aria-hidden="true"
-                className="w-5 h-5 text-primary"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  clipRule="evenodd"
-                  d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z"
-                  fillRule="evenodd"
-                />
-              </svg>
-              <h2 className="text-lg lg:text-xl font-semibold text-foreground">
-                隧道权限
-              </h2>
-              <span className="px-2 py-1 bg-default-100 dark:bg-default-50 text-default-600 rounded-full text-xs">
-                {userTunnels.length}
-              </span>
-            </div>
-          </CardHeader>
-          <CardBody className="pt-0">
-            {userTunnels.length === 0 ? (
-              <PageEmptyState className="h-48" message="暂无隧道权限" />
-            ) : (
-              <div className="space-y-3">
-                {userTunnels.map((tunnel) => {
-                  const tunnelExpStatus = getExpStatus(tunnel.expTime);
+        <section className="mb-8">
+          <h2 className="flex items-baseline gap-2 border-b border-divider pb-2 text-sm font-semibold">
+            隧道
+            <span className="text-xs font-normal tabular-nums text-default-400">
+              {userTunnels.length}
+            </span>
+          </h2>
+          {userTunnels.length === 0 ? (
+            <p className="py-6 text-sm text-default-400">暂无隧道权限</p>
+          ) : (
+            <div className="divide-y divide-divider">
+              {userTunnels.map((tunnel) => {
+                const exp = getExpStatus(tunnel.expTime);
+                const unlimited = tunnel.flow === 99999 && !tunnel.flowMiB;
 
-                  return (
-                    <div
-                      key={tunnel.id}
-                      className="border border-gray-200 dark:border-default-100 rounded-lg p-3 lg:p-4 hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-3">
-                        <div>
-                          <h3 className="font-semibold text-foreground">
-                            {tunnel.tunnelName} ID: {tunnel.id}
-                          </h3>
-                          <div className="flex flex-wrap items-center gap-2 mt-1">
-                            <span
-                              className={`px-2 py-1 rounded-md text-xs font-medium ${tunnel.tunnelFlow === 1 ? "bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300" : "bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300"}`}
-                            >
-                              {tunnel.tunnelFlow === 1
-                                ? "单向计费"
-                                : "双向计费"}
-                            </span>
-                            <span
-                              className={`px-2 py-1 rounded-md text-xs font-medium border ${tunnelExpStatus.bg} ${tunnelExpStatus.color}`}
-                            >
-                              {tunnelExpStatus.text}
-                            </span>
-                            {tunnel.flowResetTime !== undefined &&
-                              tunnel.flowResetTime !== null && (
-                                <span className="text-xs text-default-500">
-                                  {formatResetTime(tunnel.flowResetTime)}
-                                </span>
-                              )}
-                          </div>
-                        </div>
+                return (
+                  <div
+                    key={tunnel.id}
+                    className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:gap-6"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm">
+                        {tunnel.tunnelName}
                       </div>
-
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-                        <div>
-                          <p className="text-sm text-default-600 mb-1">
-                            流量配额
-                          </p>
-                          <p className="font-semibold text-foreground">
-                            {formatFlowLimit(tunnel.flow, tunnel.flowMiB)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-default-600 mb-1">
-                            已用流量
-                          </p>
-                          <p className="font-semibold text-foreground">
-                            {formatFlow(calculateTunnelUsedFlow(tunnel))}
-                          </p>
-                          <div className="mt-1">
-                            {renderProgressBar(
-                              calculateTunnelFlowPercentage(tunnel),
-                              "sm",
-                              tunnel.flow === 99999 && !tunnel.flowMiB,
-                            )}
-                          </div>
-                        </div>
-                        <div>
-                          <p className="text-sm text-default-600 mb-1">
-                            规则配额
-                          </p>
-                          <p className="font-semibold text-foreground">
-                            {formatNumber(tunnel.num)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-default-600 mb-1">
-                            已用规则
-                          </p>
-                          <p className="font-semibold text-foreground">
-                            {getTunnelUsedForwards(tunnel.tunnelId)}
-                          </p>
-                          <div className="mt-1">
-                            {renderProgressBar(
-                              calculateTunnelForwardPercentage(tunnel),
-                              "sm",
-                              tunnel.num === 99999,
-                            )}
-                          </div>
-                        </div>
+                      <div className="truncate text-xs text-default-400">
+                        {tunnel.tunnelFlow === 1 ? "单向计费" : "双向计费"}
+                        {" · "}
+                        <span className={exp.color}>{exp.text}</span>
+                        {tunnel.flowResetTime !== undefined &&
+                          tunnel.flowResetTime !== null &&
+                          ` · ${formatResetTime(tunnel.flowResetTime)}`}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardBody>
-        </Card>
-      )}
-
-      {/* 规则配置 */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <svg
-              aria-hidden="true"
-              className="w-5 h-5 text-primary"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                clipRule="evenodd"
-                d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-                fillRule="evenodd"
-              />
-            </svg>
-            <h2 className="text-lg lg:text-xl font-semibold text-foreground">
-              规则配置
-            </h2>
-            <span className="px-2 py-1 bg-default-100 dark:bg-default-50 text-default-600 rounded-full text-xs">
-              {forwardList.length}
-            </span>
-          </div>
-        </CardHeader>
-        <CardBody className="pt-0">
-          {groupedForwards().length === 0 ? (
-            <div className="text-center py-12">
-              <svg
-                aria-hidden="true"
-                className="w-12 h-12 text-default-400 mx-auto mb-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M8 9l4-4 4 4m0 6l-4 4-4-4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                />
-              </svg>
-              <p className="text-default-500">暂无规则配置</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {groupedForwards().map((group) => (
-                <div
-                  key={group.tunnelName}
-                  className="border border-gray-200 dark:border-default-100 rounded-lg p-3 lg:p-4"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-foreground">
-                      {group.tunnelName}
-                    </h3>
-                    <span className="px-2 py-1 bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 rounded-md text-sm">
-                      {group.forwards.length} 个规则
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                    {group.forwards.map((forward) => (
-                      <div
-                        key={forward.id}
-                        className="bg-white/10 dark:bg-black/10 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-lg p-3 shadow-sm hover:shadow-md transition-all duration-300"
-                      >
-                        <div className="space-y-3">
-                          <div>
-                            <h4 className="font-medium text-foreground text-sm mb-2 truncate">
-                              {forward.name}
-                            </h4>
-                            <div className="space-y-1">
-                              <button
-                                className={`block px-2 py-1 bg-white/20 dark:bg-black/20 backdrop-blur-md rounded-lg border border-white/20 dark:border-white/10 font-mono text-xs truncate text-foreground transition-all duration-300 ${hasMultipleIps(forward.inIp) ? "cursor-pointer hover:bg-white/30 dark:hover:bg-white/10" : ""}`}
-                                disabled={!hasMultipleIps(forward.inIp)}
-                                title={formatInAddress(
-                                  forward.inIp,
-                                  forward.inPort,
-                                )}
-                                type="button"
-                                onClick={() =>
-                                  showAddressModal(
-                                    forward.inIp,
-                                    forward.inPort,
-                                    "入口地址",
-                                  )
-                                }
-                              >
-                                {formatInAddress(forward.inIp, forward.inPort)}
-                              </button>
-                              <div className="text-center text-default-400 text-xs">
-                                ↓
-                              </div>
-                              <button
-                                className={`block px-2 py-1 bg-white/20 dark:bg-black/20 backdrop-blur-md rounded-lg border border-white/20 dark:border-white/10 font-mono text-xs truncate text-foreground transition-all duration-300 ${hasMultipleRemoteAddresses(forward.remoteAddr) ? "cursor-pointer hover:bg-white/30 dark:hover:bg-white/10" : ""}`}
-                                disabled={
-                                  !hasMultipleRemoteAddresses(
-                                    forward.remoteAddr,
-                                  )
-                                }
-                                title={formatRemoteAddress(forward.remoteAddr)}
-                                type="button"
-                                onClick={() =>
-                                  showRemoteAddressModal(
-                                    forward.remoteAddr,
-                                    "出口地址",
-                                  )
-                                }
-                              >
-                                {formatRemoteAddress(forward.remoteAddr)}
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="pt-2 border-t border-gray-200 dark:border-default-200">
-                            <div className="grid grid-cols-3 gap-1 text-xs">
-                              <div className="text-center">
-                                <div className="text-default-500 mb-1">
-                                  上传
-                                </div>
-                                <div className="font-medium text-green-600 dark:text-green-400 truncate">
-                                  {formatFlow(forward.inFlow || 0)}
-                                </div>
-                              </div>
-                              <div className="text-center">
-                                <div className="text-default-500 mb-1">
-                                  下载
-                                </div>
-                                <div className="font-medium text-orange-600 dark:text-orange-400 truncate">
-                                  {formatFlow(forward.outFlow || 0)}
-                                </div>
-                              </div>
-                              <div className="text-center">
-                                <div className="text-default-500 mb-1">
-                                  计费
-                                </div>
-                                <div className="font-medium text-primary truncate">
-                                  {formatFlow(
-                                    calculateForwardBillingFlow(forward),
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                    <div className="w-full sm:w-44">
+                      <div className="flex justify-between text-xs tabular-nums">
+                        <span className="text-default-400">流量</span>
+                        <span>
+                          {formatFlow(calculateTunnelUsedFlow(tunnel))}
+                          <span className="text-default-400">
+                            {" "}
+                            / {formatFlowLimit(tunnel.flow, tunnel.flowMiB)}
+                          </span>
+                        </span>
                       </div>
-                    ))}
+                      <div className="mt-1">
+                        {renderProgressBar(
+                          calculateTunnelFlowPercentage(tunnel),
+                          "sm",
+                          unlimited,
+                        )}
+                      </div>
+                    </div>
+                    <div className="w-full sm:w-32">
+                      <div className="flex justify-between text-xs tabular-nums">
+                        <span className="text-default-400">规则</span>
+                        <span>
+                          {getTunnelUsedForwards(tunnel.tunnelId)}
+                          <span className="text-default-400">
+                            {" "}
+                            / {formatNumber(tunnel.num)}
+                          </span>
+                        </span>
+                      </div>
+                      <div className="mt-1">
+                        {renderProgressBar(
+                          calculateTunnelForwardPercentage(tunnel),
+                          "sm",
+                          tunnel.num === 99999,
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
-        </CardBody>
-      </Card>
+        </section>
+      )}
+
+      {/* 规则 */}
+      <section>
+        <h2 className="flex items-baseline gap-2 border-b border-divider pb-2 text-sm font-semibold">
+          规则
+          <span className="text-xs font-normal tabular-nums text-default-400">
+            {forwardList.length}
+          </span>
+        </h2>
+        {groupedForwards().length === 0 ? (
+          <p className="py-6 text-sm text-default-400">暂无规则配置</p>
+        ) : (
+          groupedForwards().map((group) => (
+            <div key={group.tunnelName}>
+              <div className="flex items-baseline gap-1.5 border-b border-divider pb-1.5 pt-5 text-xs">
+                <span className="font-medium text-default-500">
+                  {group.tunnelName}
+                </span>
+                <span className="tabular-nums text-default-400">
+                  {group.forwards.length} 个规则
+                </span>
+              </div>
+              <div className="divide-y divide-divider">
+                {group.forwards.map((forward) => (
+                  <div
+                    key={forward.id}
+                    className="flex items-center gap-3 py-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm">{forward.name}</div>
+                      <div className="flex min-w-0 items-center gap-1.5 text-xs tabular-nums text-default-400">
+                        <button
+                          className={`min-w-0 truncate ${hasMultipleIps(forward.inIp) ? "underline decoration-dotted underline-offset-2 hover:text-foreground" : "cursor-default"}`}
+                          disabled={!hasMultipleIps(forward.inIp)}
+                          title={formatInAddress(forward.inIp, forward.inPort)}
+                          type="button"
+                          onClick={() =>
+                            showAddressModal(
+                              forward.inIp,
+                              forward.inPort,
+                              "入口地址",
+                            )
+                          }
+                        >
+                          {formatInAddress(forward.inIp, forward.inPort)}
+                        </button>
+                        <span className="shrink-0">→</span>
+                        <button
+                          className={`min-w-0 truncate ${hasMultipleRemoteAddresses(forward.remoteAddr) ? "underline decoration-dotted underline-offset-2 hover:text-foreground" : "cursor-default"}`}
+                          disabled={
+                            !hasMultipleRemoteAddresses(forward.remoteAddr)
+                          }
+                          title={formatRemoteAddress(forward.remoteAddr)}
+                          type="button"
+                          onClick={() =>
+                            showRemoteAddressModal(
+                              forward.remoteAddr,
+                              "出口地址",
+                            )
+                          }
+                        >
+                          {formatRemoteAddress(forward.remoteAddr)}
+                        </button>
+                      </div>
+                    </div>
+                    <div
+                      className="shrink-0 text-right text-sm tabular-nums"
+                      title={`上传 ${formatFlow(forward.inFlow || 0)} · 下载 ${formatFlow(forward.outFlow || 0)}`}
+                    >
+                      {formatFlow(calculateForwardBillingFlow(forward))}
+                      <div className="text-xs text-default-400">计费</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        )}
+      </section>
 
       {/* 地址列表弹窗 */}
       <Modal

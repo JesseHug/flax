@@ -292,7 +292,7 @@ function ServerCard({
 
   return (
     <Card
-      className="group relative hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,0,0,0.15)] transition-all duration-300 h-full flex flex-col cursor-pointer"
+      className="group relative transition-colors hover:bg-default-50 h-full flex flex-col cursor-pointer"
       onClick={onPress}
     >
       {/* Dynamic top gradient bar based on status */}
@@ -308,7 +308,7 @@ function ServerCard({
       <CardHeader className="pb-2 pt-5 px-5 flex flex-row justify-between items-start gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <div className="relative flex-shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-default-100 dark:bg-default-50/10 flex items-center justify-center border border-divider">
+            <div className="w-8 h-8 rounded-md bg-default-100 flex items-center justify-center">
               <DistroIcon
                 className="w-5 h-5"
                 distro={distro}
@@ -1596,7 +1596,7 @@ export function MonitorView({
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="min-w-0 rounded-xl border border-divider bg-content1 px-3 py-2"
+                  className="min-w-0 rounded-lg border border-divider px-3 py-2"
                 >
                   <div className="truncate text-xs text-default-500">
                     {item.label}
@@ -1750,7 +1750,7 @@ export function MonitorView({
 
                       {/* Active monitor info bar */}
                       {resolvedActiveMonitor && (
-                        <div className="flex items-center justify-between gap-3 rounded-xl border border-divider bg-default-50 px-3 py-2">
+                        <div className="flex items-center justify-between gap-3 rounded-lg border border-divider px-3 py-2">
                           <div className="flex items-center gap-3 min-w-0 flex-wrap">
                             <Chip color="primary" size="sm" variant="flat">
                               {resolvedActiveMonitor.type.toUpperCase()}

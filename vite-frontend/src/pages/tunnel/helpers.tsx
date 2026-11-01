@@ -177,5 +177,7 @@ export const PageShell = ({
   embedded ? (
     <div>{children}</div>
   ) : (
-    <AnimatedPage className="px-3 lg:px-6 py-6">{children}</AnimatedPage>
+    <AnimatedPage className="px-4 py-6 lg:px-10 lg:py-8">
+      {children}
+    </AnimatedPage>
   );

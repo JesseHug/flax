@@ -1,7 +1,5 @@
 import type { NodeSystemInfo } from "@/pages/node/system-info";
 
-import { ArrowDown, ArrowUp } from "lucide-react";
-
 function bytes(v: number): string {
   const units = ["B", "K", "M", "G", "T", "P"];
   let i = 0;
@@ -15,7 +13,7 @@ function bytes(v: number): string {
 }
 
 function tone(v: number): string {
-  return v >= 85 ? "bg-danger" : v >= 60 ? "bg-warning" : "bg-success";
+  return v >= 85 ? "bg-danger" : v >= 60 ? "bg-warning" : "bg-foreground";
 }
 
 function Meter({ label, value }: { label: string; value?: number }) {
@@ -23,11 +21,11 @@ function Meter({ label, value }: { label: string; value?: number }) {
     <div className="min-w-0 space-y-1">
       <div className="flex items-baseline justify-between gap-1 text-[11px] leading-none">
         <span className="text-default-500">{label}</span>
-        <span className="font-mono font-semibold">
+        <span className="tabular-nums">
           {value === undefined ? "—" : `${Math.round(value)}%`}
         </span>
       </div>
-      <div className="h-1 overflow-hidden rounded-full bg-default-100">
+      <div className="h-[3px] overflow-hidden rounded-full bg-default-100">
         {value !== undefined && (
           <div
             className={`h-full rounded-full ${tone(value)}`}
@@ -64,8 +62,6 @@ export function NodeLiveStats({
     </>
   );
   const rate = (v?: number) => (v === undefined ? "—" : `${bytes(v)}/s`);
-  const upIcon = <ArrowUp className="h-3 w-3 shrink-0 text-emerald-500" />;
-  const downIcon = <ArrowDown className="h-3 w-3 shrink-0 text-sky-500" />;
   const total = month ? bytes(month[0] + month[1]) : "—";
   const monthHint =
     new Date().getTimezoneOffset() % 60 !== 0
@@ -73,30 +69,22 @@ export function NodeLiveStats({
       : "按本地时区统计";
   const split = month ? `↑${bytes(month[1])} ↓${bytes(month[0])}` : "";
 
-  if (variant !== "row") {
+  if (variant === "card") {
     return (
-      <div
-        className={`space-y-2 ${variant === "footer" ? "mt-2 lg:hidden" : ""}`}
-      >
+      <div className="space-y-2">
         <div className="grid grid-cols-3 gap-3">{meters}</div>
-        <div className="grid grid-cols-2 divide-x divide-divider rounded-lg bg-default-100/60 py-1.5 text-[11px] tabular-nums">
-          <div className="min-w-0 px-2.5">
+        <div className="grid grid-cols-2 divide-x divide-divider py-1.5 text-[11px] tabular-nums">
+          <div className="min-w-0 pr-2.5">
             <div className="text-[10px] text-default-400">网速</div>
-            <div className="flex flex-wrap items-center gap-x-2 font-medium">
-              <span className="flex items-center gap-1 whitespace-nowrap">
-                {upIcon}
-                {rate(up)}
-              </span>
-              <span className="flex items-center gap-1 whitespace-nowrap">
-                {downIcon}
-                {rate(down)}
-              </span>
+            <div className="flex flex-wrap items-center gap-x-2">
+              <span className="whitespace-nowrap">↑ {rate(up)}</span>
+              <span className="whitespace-nowrap">↓ {rate(down)}</span>
             </div>
           </div>
           <div className="min-w-0 px-2.5" title={`${split} ${monthHint}`}>
             <div className="text-[10px] text-default-400">本月流量</div>
             <div className="flex flex-wrap items-baseline gap-x-1.5">
-              <span className="font-semibold">{total}</span>
+              <span className="font-medium">{total}</span>
               <span className="whitespace-nowrap text-[10px] text-default-400">
                 {split}
               </span>
@@ -107,29 +95,61 @@ export function NodeLiveStats({
     );
   }
 
+  // List rows: one quiet line, and nothing for data the node has not sent.
+  const usage = info
+    ? (
+        [
+          ["CPU", info.cpuUsage],
+          ["内存", info.memoryUsage],
+          ["磁盘", info.diskUsage],
+        ] as const
+      ).filter(([, v]) => v !== undefined)
+    : [];
+  const usageLine = usage.length > 0 && (
+    <span className="whitespace-nowrap">
+      {usage.map(([label, v], i) => (
+        <span key={label}>
+          {i > 0 && " · "}
+          {label}{" "}
+          <span
+            className={
+              v! >= 85 ? "text-danger" : v! >= 60 ? "text-warning-600" : ""
+            }
+          >
+            {Math.round(v!)}%
+          </span>
+        </span>
+      ))}
+    </span>
+  );
+  const speedLine = info && (up !== undefined || down !== undefined) && (
+    <span className="whitespace-nowrap">
+      ↑ {rate(up)} ↓ {rate(down)}
+    </span>
+  );
+
+  if (variant === "footer") {
+    if (!usageLine && !speedLine && !month) return null;
+
+    return (
+      <div className="flex flex-wrap gap-x-3 text-xs tabular-nums text-default-400 lg:hidden">
+        {usageLine}
+        {speedLine}
+        {month && <span title={`${split} ${monthHint}`}>本月 {total}</span>}
+      </div>
+    );
+  }
+
   return (
-    <div className="hidden items-center gap-5 lg:flex">
-      <div className="grid w-60 grid-cols-3 gap-3">{meters}</div>
-      <div className="w-24 space-y-0.5 text-[11px] font-medium leading-tight tabular-nums">
-        <div className="flex items-center gap-1">
-          {upIcon}
-          {rate(up)}
-        </div>
-        <div className="flex items-center gap-1">
-          {downIcon}
-          {rate(down)}
-        </div>
-      </div>
-      <div
-        className="w-28 space-y-0.5 leading-tight tabular-nums"
-        title={monthHint}
+    <div className="hidden items-center gap-6 text-xs tabular-nums text-default-400 lg:flex">
+      {usageLine}
+      {speedLine}
+      <span
+        className="w-24 text-right text-sm text-foreground"
+        title={`${split} ${monthHint}`}
       >
-        <div className="flex items-baseline gap-1.5 text-[11px]">
-          <span className="text-[10px] text-default-400">本月</span>
-          <span className="font-semibold">{total}</span>
-        </div>
-        <div className="text-[10px] text-default-400">{split || "—"}</div>
-      </div>
+        {month ? total : "—"}
+      </span>
     </div>
   );
 }

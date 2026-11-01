@@ -36,6 +36,17 @@ function colorVariant(color: ChipColor) {
   return "default" as const;
 }
 
+const SOFT: Record<ChipColor, string> = {
+  default: "border-transparent bg-default-100 text-default-600",
+  primary: "border-transparent bg-default-100 text-default-600",
+  secondary: "border-transparent bg-default-100 text-default-600",
+  success:
+    "border-transparent bg-success/10 text-success-700 dark:text-success-400",
+  warning:
+    "border-transparent bg-warning/10 text-warning-700 dark:text-warning-400",
+  danger: "border-transparent bg-danger/10 text-danger dark:text-danger-400",
+};
+
 export function Chip({
   children,
   className,
@@ -47,9 +58,10 @@ export function Chip({
   return (
     <Badge
       className={cn(
-        variant === "flat" || variant === "light" ? "bg-opacity-15" : "",
+        // Tailwind v4 dropped bg-opacity-*: soft chips set their own tint.
+        variant === "flat" || variant === "light" ? SOFT[color] : "",
         variant === "bordered" ? "border-current bg-transparent" : "",
-        size === "sm" ? "px-2 py-0 text-[10px]" : "",
+        size === "sm" ? "px-1.5 py-0 text-[11px]" : "",
         size === "lg" ? "px-3 py-1 text-sm" : "",
         className,
       )}

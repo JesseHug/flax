@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { motion } from "framer-motion";
 
 import { Card, CardBody, CardHeader } from "@/shadcn-bridge/heroui/card";
 import { Input } from "@/shadcn-bridge/heroui/input";
@@ -234,15 +233,10 @@ export default function IndexPage() {
   return (
     <div className="relative flex flex-col min-h-screen bg-mesh-gradient overflow-hidden">
       <section className="flex flex-col items-center justify-center flex-1 w-full p-4 relative z-10">
-        <motion.div
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-[420px] px-4 sm:px-0"
-          initial={{ opacity: 0, y: 24 }}
-          transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-        >
-          <Card className="w-full bg-white/20 dark:bg-zinc-900/20 backdrop-blur-3xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] border-white/80 dark:border-white/10 rounded-[32px] p-2 sm:p-4">
+        <div className="w-full max-w-[380px] px-4 sm:px-0">
+          <Card className="w-full border-0 bg-transparent p-0">
             <CardHeader className="pb-0 pt-6 px-6 flex-col items-center">
-              <BrandLogo className="w-14 h-14 rounded-2xl mb-4" size={56} />
+              <BrandLogo className="w-10 h-10 mb-4" size={40} />
               <h1 className="text-2xl font-bold tracking-tight text-foreground">
                 {siteConfig.name}
               </h1>
@@ -255,7 +249,7 @@ export default function IndexPage() {
                 <Input
                   classNames={{
                     inputWrapper:
-                      "bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/30 dark:border-white/10 h-12 shadow-sm rounded-xl",
+                      "bg-background border border-input h-10 rounded-md",
                     input: "text-base font-medium",
                   }}
                   errorMessage={errors.username}
@@ -274,7 +268,7 @@ export default function IndexPage() {
                 <Input
                   classNames={{
                     inputWrapper:
-                      "bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/30 dark:border-white/10 h-12 shadow-sm rounded-xl",
+                      "bg-background border border-input h-10 rounded-md",
                     input: "text-base font-medium tracking-wider",
                   }}
                   isDisabled={loading}
@@ -291,7 +285,7 @@ export default function IndexPage() {
                 />
 
                 <Button
-                  className="mt-4 h-12 rounded-xl bg-primary text-white font-bold text-base shadow-[0_8px_16px_rgba(0,122,255,0.3)] transition-transform active:scale-[0.98]"
+                  className="mt-2 h-10 rounded-md bg-primary text-primary-foreground font-medium"
                   disabled={loading}
                   isLoading={loading}
                   onPress={handleLogin}
@@ -304,7 +298,7 @@ export default function IndexPage() {
                 </Button>
                 {passkeyEnabled && (
                   <Button
-                    className="h-12 rounded-xl"
+                    className="h-10 rounded-md"
                     disabled={loading}
                     variant="bordered"
                     onPress={() => void handlePasskeyLogin()}
@@ -314,7 +308,7 @@ export default function IndexPage() {
                 )}
                 {githubEnabled && (
                   <Button
-                    className="h-12 rounded-xl"
+                    className="h-10 rounded-md"
                     disabled={loading}
                     variant="bordered"
                     onPress={() => void handleGithubLogin()}
@@ -325,14 +319,14 @@ export default function IndexPage() {
               </div>
             </CardBody>
           </Card>
-        </motion.div>
+        </div>
 
         {/* 版权信息 - 固定在底部，不占据布局空间 */}
 
         <VersionFooter
           containerClassName="fixed inset-x-0 bottom-4 text-center py-4"
           poweredClassName="text-xs text-gray-400 dark:text-gray-500"
-          updateBadgeClassName="ml-2 inline-flex items-center rounded-full bg-rose-500/90 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-white"
+          updateBadgeClassName="ml-1.5 text-foreground"
           version={isWebView ? siteConfig.app_version : siteConfig.version}
           versionClassName="text-xs text-gray-400 dark:text-gray-500 mt-1"
         />

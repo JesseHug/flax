@@ -8,15 +8,7 @@ import type {
 
 import { useCallback, useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  ChevronRight,
-  CircleAlert,
-  Globe,
-  Link2,
-  Rss,
-  Server,
-  TriangleAlert,
-} from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 import { useVisiblePolling } from "@/hooks/use-visible-polling";
 import {
@@ -110,34 +102,9 @@ const KINDS: Record<
   },
 };
 
-const TONES = {
-  blue: [
-    "bg-blue-100 dark:bg-blue-500/20",
-    "text-blue-600 dark:text-blue-400",
-    "bg-blue-500",
-  ],
-  green: [
-    "bg-green-100 dark:bg-green-500/20",
-    "text-green-600 dark:text-green-400",
-    "bg-green-500",
-  ],
-  purple: [
-    "bg-purple-100 dark:bg-purple-500/20",
-    "text-purple-600 dark:text-purple-400",
-    "bg-purple-500",
-  ],
-  orange: [
-    "bg-orange-100 dark:bg-orange-500/20",
-    "text-orange-600 dark:text-orange-400",
-    "bg-orange-500",
-  ],
-} as const;
-
-/** A headline figure, in the upstream metric card style. */
+/** A headline figure: one cell of the strip at the top of the page. */
 function Metric({
   label,
-  icon: Icon,
-  tone,
   value,
   total,
   foot,
@@ -146,57 +113,38 @@ function Metric({
   onPress,
 }: {
   label: string;
-  icon: typeof Server;
-  tone: keyof typeof TONES;
   value: number;
-  /** Shown as "value / total" with a bar, when set. */
+  /** Shown as "value / total", when set. */
   total?: number;
   foot: string;
+  /** Only problems get a color; "all good" stays quiet. */
   footTone?: "danger" | "warning" | "success";
   footRight?: string;
   onPress: () => void;
 }) {
-  const [chip, iconColor, bar] = TONES[tone];
-  const pct = total ? Math.round((value / total) * 100) : 0;
-
   return (
     <button
-      className="rounded-2xl border border-divider bg-content1 p-4 text-left shadow-sm transition-shadow hover:shadow-md lg:p-5"
+      className="bg-background px-4 py-4 text-left transition-colors hover:bg-default-50 lg:px-5"
       type="button"
       onClick={onPress}
     >
-      <div className="flex items-center justify-between gap-2">
-        <span className="truncate text-sm text-default-600">{label}</span>
-        <span className={`flex-shrink-0 rounded-xl p-2 ${chip}`}>
-          <Icon className={`h-4 w-4 lg:h-5 lg:w-5 ${iconColor}`} />
-        </span>
-      </div>
-      <div className="mt-2 text-2xl font-bold lg:text-3xl">
+      <div className="truncate text-sm text-default-500">{label}</div>
+      <div className="mt-1 text-2xl font-semibold tabular-nums tracking-tight">
         {value}
         {total !== undefined && (
-          <span className="ml-1 text-base font-normal text-default-400">
+          <span className="ml-1 text-sm font-normal text-default-400">
             / {total}
           </span>
         )}
       </div>
-      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-default-100">
-        {total !== undefined && total > 0 && (
-          <div
-            className={`h-full rounded-full ${bar}`}
-            style={{ width: `${pct}%` }}
-          />
-        )}
-      </div>
-      <div className="mt-1.5 flex items-center justify-between gap-2 text-xs">
+      <div className="mt-1 flex items-center justify-between gap-2 text-xs">
         <span
           className={`truncate ${
             footTone === "danger"
               ? "text-danger"
               : footTone === "warning"
                 ? "text-warning-600"
-                : footTone === "success"
-                  ? "text-success-600"
-                  : "text-default-500"
+                : "text-default-400"
           }`}
         >
           {foot}
@@ -221,14 +169,28 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-divider bg-content1 p-4 shadow-sm lg:p-5">
-      <div className="mb-3 flex items-center gap-2">
-        <h2 className="text-sm font-semibold lg:text-base">{title}</h2>
+    <section>
+      <div className="flex items-center gap-2 border-b border-divider pb-2">
+        <h2 className="text-sm font-semibold">{title}</h2>
         {badge}
         {action && <div className="ml-auto">{action}</div>}
       </div>
       {children}
     </section>
+  );
+}
+
+/** "全部 →" link in a panel's title row. */
+function MoreLink({ onPress }: { onPress: () => void }) {
+  return (
+    <button
+      className="flex items-center text-xs text-default-500 hover:text-foreground"
+      type="button"
+      onClick={onPress}
+    >
+      全部
+      <ChevronRight className="h-3.5 w-3.5" />
+    </button>
   );
 }
 
@@ -445,10 +407,10 @@ export function AdminOverview() {
   const shownNodes = [...nodes].sort((a, b) => a.status - b.status).slice(0, 6);
 
   return (
-    <AnimatedPage className="space-y-4 px-3 py-6 lg:px-6">
-      <div>
-        <h1 className="text-lg font-semibold">概览</h1>
-        <p className="text-xs text-default-500">
+    <AnimatedPage className="space-y-8 px-4 py-6 lg:px-10 lg:py-8">
+      <div className="flex items-baseline justify-between gap-3">
+        <h1 className="text-xl font-semibold tracking-tight">概览</h1>
+        <p className="text-xs text-default-400">
           {new Date().toLocaleDateString("zh-CN", {
             month: "long",
             day: "numeric",
@@ -458,7 +420,7 @@ export function AdminOverview() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-divider bg-divider lg:grid-cols-4">
         <Metric
           foot={
             nodes.length === 0
@@ -479,9 +441,7 @@ export function AdminOverview() {
                 ? "success"
                 : undefined
           }
-          icon={Server}
           label="服务器在线"
-          tone="blue"
           total={nodes.length}
           value={online}
           onPress={() => navigate("/node")}
@@ -508,9 +468,7 @@ export function AdminOverview() {
                 ? "success"
                 : undefined
           }
-          icon={Globe}
           label="节点运行"
-          tone="green"
           total={enabledInbounds.length}
           value={runningInbounds.length}
           onPress={() => navigate("/inbound")}
@@ -530,9 +488,7 @@ export function AdminOverview() {
                 ? "success"
                 : undefined
           }
-          icon={Link2}
           label="中转线路"
-          tone="purple"
           total={relays.length || undefined}
           value={relaysUp.length}
           onPress={() => navigate("/relay")}
@@ -553,21 +509,19 @@ export function AdminOverview() {
                 ? "success"
                 : undefined
           }
-          icon={Rss}
           label="有效订阅"
-          tone="orange"
           total={subs.length}
           value={activeSubs.length}
           onPress={() => navigate("/subscription")}
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
-        <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-10">
+        <div className="space-y-8">
           <Panel
             badge={
               issues.length > 0 && (
-                <span className="rounded-full bg-danger-50 px-2 text-xs font-semibold text-danger dark:bg-danger-500/20">
+                <span className="text-xs tabular-nums text-default-400">
                   {issues.length}
                 </span>
               )
@@ -575,64 +529,40 @@ export function AdminOverview() {
             title="需要处理"
           >
             {groups.length === 0 ? (
-              <p className="py-3 text-center text-sm text-success-600">
-                一切正常
-              </p>
+              <p className="py-3 text-sm text-default-400">一切正常</p>
             ) : (
-              <div className="space-y-2.5">
+              <div className="divide-y divide-divider">
                 {groups.map((g) => {
                   const danger = g.level === "danger";
                   const meta = KINDS[g.kind];
-                  const Icon = danger ? CircleAlert : TriangleAlert;
                   const hint =
                     g.kind === "probe" && g.items[0].detail
                       ? `${meta.hint}：${g.items[0].detail}`
                       : meta.hint;
+                  const names = g.items.slice(0, 3).map((it) => it.name);
 
                   return (
                     <button
                       key={g.kind}
-                      className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-colors ${
-                        danger
-                          ? "border-danger-100 bg-danger-50/70 hover:bg-danger-50 dark:border-danger-500/20 dark:bg-danger-500/10"
-                          : "border-warning-100 bg-warning-50/70 hover:bg-warning-50 dark:border-warning-500/20 dark:bg-warning-500/10"
-                      }`}
+                      className="flex w-full items-center gap-3 py-3 text-left transition-colors hover:bg-default-50"
+                      title={hint}
                       type="button"
                       onClick={() => navigate(meta.path)}
                     >
                       <span
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white ${danger ? "bg-danger" : "bg-warning"}`}
-                      >
-                        <Icon className="h-4 w-4" />
-                      </span>
+                        className={`h-1.5 w-1.5 shrink-0 rounded-full ${danger ? "bg-danger" : "bg-warning"}`}
+                      />
                       <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-semibold">
+                        <span className="block text-sm">
                           {meta.label(g.items.length)}
                         </span>
-                        <span className="block truncate text-xs text-default-500">
-                          {hint}
-                        </span>
-                        <span className="mt-1.5 flex flex-wrap gap-1.5">
-                          {g.items.slice(0, 6).map((it) => (
-                            <span
-                              key={it.name}
-                              className="max-w-[12rem] truncate rounded-full border border-divider bg-content1 px-2 py-0.5 text-xs text-default-700"
-                              title={it.detail}
-                            >
-                              {it.name}
-                            </span>
-                          ))}
-                          {g.items.length > 6 && (
-                            <span className="rounded-full border border-divider bg-content1 px-2 py-0.5 text-xs text-default-500">
-                              +{g.items.length - 6}
-                            </span>
-                          )}
+                        <span className="block truncate text-xs text-default-400">
+                          {names.join("、")}
+                          {g.items.length > names.length &&
+                            ` 等 ${g.items.length} 个`}
                         </span>
                       </span>
-                      <span className="hidden shrink-0 items-center self-center text-xs text-default-500 sm:flex">
-                        去处理
-                        <ChevronRight className="h-3.5 w-3.5" />
-                      </span>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-default-300" />
                     </button>
                   );
                 })}
@@ -642,19 +572,10 @@ export function AdminOverview() {
 
           {nodes.length > 0 && (
             <Panel
-              action={
-                <button
-                  className="flex items-center text-xs text-primary"
-                  type="button"
-                  onClick={() => navigate("/node")}
-                >
-                  查看全部
-                  <ChevronRight className="h-3.5 w-3.5" />
-                </button>
-              }
-              title="服务器状态"
+              action={<MoreLink onPress={() => navigate("/node")} />}
+              title="服务器"
             >
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="divide-y divide-divider">
                 {shownNodes.map((n) => {
                   const up = n.status === 1;
                   const ip = String(n.serverIpV4 || n.serverIp || "");
@@ -662,21 +583,17 @@ export function AdminOverview() {
                   return (
                     <button
                       key={n.id}
-                      className="flex items-center gap-2.5 rounded-xl border border-divider px-3 py-2 text-left transition-colors hover:bg-default-50"
+                      className="flex w-full items-center gap-3 py-2.5 text-left text-sm transition-colors hover:bg-default-50"
                       type="button"
                       onClick={() => navigate("/node")}
                     >
                       <span
-                        className={`h-2 w-2 shrink-0 rounded-full ${up ? "bg-success" : "bg-danger"}`}
+                        className={`h-1.5 w-1.5 shrink-0 rounded-full ${up ? "bg-success" : "bg-danger"}`}
+                        title={up ? "在线" : "离线"}
                       />
-                      <span className="min-w-0">
-                        <span className="block truncate text-sm font-medium">
-                          {n.name}
-                        </span>
-                        <span className="block truncate font-mono text-xs text-default-500">
-                          {up ? "在线" : "离线"}
-                          {ip ? ` · ${ip}` : ""}
-                        </span>
+                      <span className="min-w-0 flex-1 truncate">{n.name}</span>
+                      <span className="shrink-0 text-xs tabular-nums text-default-400">
+                        {up ? ip : "离线"}
                       </span>
                     </button>
                   );
@@ -686,49 +603,35 @@ export function AdminOverview() {
           )}
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-8">
           <Panel
-            action={<span className="text-xs text-default-400">累计</span>}
+            action={
+              <span className="text-xs tabular-nums text-default-400">
+                ↑ {formatTraffic(up)} · ↓ {formatTraffic(down)}
+              </span>
+            }
             title="节点流量"
           >
-            <div className="mb-3 grid grid-cols-2 gap-2">
-              {(
-                [
-                  ["↑ 上传", up],
-                  ["↓ 下载", down],
-                ] as Array<[string, number]>
-              ).map(([label, bytes]) => (
-                <div
-                  key={label}
-                  className="rounded-xl bg-default-100/70 px-3 py-2"
-                >
-                  <div className="text-xs text-default-500">{label}</div>
-                  <div className="font-mono text-base font-semibold">
-                    {formatTraffic(bytes)}
-                  </div>
-                </div>
-              ))}
-            </div>
             {top.length === 0 ? (
-              <p className="py-1 text-center text-xs text-default-500">
+              <p className="py-3 text-xs text-default-400">
                 还没有流量数据（导入的节点不统计流量）
               </p>
             ) : (
-              <div className="space-y-2.5">
+              <div className="divide-y divide-divider">
                 {top.map((i) => {
                   const total = i.uploadBytes + i.downloadBytes;
 
                   return (
-                    <div key={i.id}>
-                      <div className="mb-1 flex items-center justify-between gap-2 text-xs">
+                    <div key={i.id} className="py-2.5">
+                      <div className="flex items-center justify-between gap-2 text-sm">
                         <span className="truncate">{i.name}</span>
-                        <span className="shrink-0 font-mono text-default-500">
+                        <span className="shrink-0 text-xs tabular-nums text-default-400">
                           {formatTraffic(total)}
                         </span>
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-default-100">
+                      <div className="mt-1.5 h-[3px] overflow-hidden rounded-full bg-default-100">
                         <div
-                          className="h-full rounded-full bg-primary"
+                          className="h-full rounded-full bg-foreground"
                           style={{
                             width: `${Math.max(4, (total / topMax) * 100)}%`,
                           }}
@@ -750,18 +653,16 @@ export function AdminOverview() {
                   return (
                     <button
                       key={e.key}
-                      className="flex w-full items-center gap-2.5 py-2 text-left text-sm"
+                      className="flex w-full items-center gap-3 py-2.5 text-left text-sm transition-colors hover:bg-default-50"
                       type="button"
                       onClick={() => navigate(e.path)}
                     >
-                      <span
-                        className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${e.kind === "服务器" ? "bg-warning-50 text-warning-700 dark:bg-warning-500/20" : "bg-orange-50 text-orange-700 dark:bg-orange-500/20"}`}
-                      >
+                      <span className="min-w-0 flex-1 truncate">{e.name}</span>
+                      <span className="shrink-0 text-xs text-default-400">
                         {e.kind}
                       </span>
-                      <span className="min-w-0 flex-1 truncate">{e.name}</span>
                       <span
-                        className={`shrink-0 text-xs ${days <= 3 ? "text-warning-600" : "text-default-500"}`}
+                        className={`w-16 shrink-0 text-right text-xs tabular-nums ${days <= 3 ? "text-warning-600" : "text-default-400"}`}
                       >
                         {daysLeft(e.at)}
                       </span>

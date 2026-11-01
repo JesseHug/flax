@@ -5,6 +5,7 @@ import type {
   NodeApiItem,
 } from "@/api/types";
 
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -84,6 +85,9 @@ function nodeFamilyIP(node: NodeApiItem | undefined, v6: boolean): string {
   return "";
 }
 
+/** Templates shown before "更多模板". */
+const PRESETS_SHOWN = 3;
+
 export function InboundFormModal({
   isOpen,
   onOpenChange,
@@ -98,9 +102,11 @@ export function InboundFormModal({
   const [form, setForm] = useState<InboundForm>(initial);
   const [initialKey, setInitialKey] = useState(initial);
   const [saving, setSaving] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(
-    initial.outboundIpStrategy !== "auto",
-  );
+  // New inbounds show only the essentials; editing opens the details.
+  const advancedOpen = (f: InboundForm) =>
+    Boolean(f.id) || f.outboundIpStrategy !== "auto";
+  const [showAdvanced, setShowAdvanced] = useState(() => advancedOpen(initial));
+  const [showAllPresets, setShowAllPresets] = useState(false);
   const isEdit = Boolean(initial.id);
   const selectedNode = nodes.find((node) => String(node.id) === form.nodeId);
   const shareV4 = nodeFamilyIP(selectedNode, false);
@@ -110,7 +116,8 @@ export function InboundFormModal({
   if (initialKey !== initial) {
     setInitialKey(initial);
     setForm(initial);
-    setShowAdvanced(initial.outboundIpStrategy !== "auto");
+    setShowAdvanced(advancedOpen(initial));
+    setShowAllPresets(false);
   }
 
   const set = <K extends keyof InboundForm>(key: K, value: InboundForm[K]) =>
@@ -311,6 +318,8 @@ export function InboundFormModal({
 
     if (err) {
       toast.error(err);
+      // The field may be in the folded section.
+      setShowAdvanced(true);
 
       return;
     }
@@ -359,9 +368,8 @@ export function InboundFormModal({
 
   return (
     <Modal
-      backdrop="blur"
       classNames={{
-        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+        base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
       }}
       isOpen={isOpen}
       placement="center"
@@ -372,13 +380,10 @@ export function InboundFormModal({
       <ModalContent>
         {(onClose) => (
           <>
-            <ModalHeader className="flex flex-col gap-1">
-              <h2 className="text-xl font-bold">
+            <ModalHeader>
+              <h2 className="text-base font-semibold">
                 {isEdit ? "编辑入站" : "新建入站"}
               </h2>
-              <p className="text-small text-default-500">
-                留空的 UUID、密码、密钥会自动生成，端口留空则随机分配
-              </p>
             </ModalHeader>
             <ModalBody>
               <div className="space-y-4">
@@ -420,7 +425,7 @@ export function InboundFormModal({
                 </div>
 
                 {form.nodeId && !installedKernel && (
-                  <div className="flex items-center justify-between gap-3 rounded-xl bg-warning-50 dark:bg-warning-500/10 px-3 py-2 text-sm">
+                  <div className="flex items-center justify-between gap-3 rounded-lg bg-warning/10 px-3 py-2 text-sm">
                     <span className="text-warning-700 dark:text-warning-400">
                       该服务器还没有安装 {kernelInfo?.name ?? form.kernelType}
                     </span>
@@ -439,34 +444,57 @@ export function InboundFormModal({
 
                 {!isEdit && (
                   <div>
-                    <p className="text-sm font-medium mb-2">快速模板</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {presetsFor(caps, form.kernelType).map((p) => {
-                        const active =
+                    <p className="mb-1.5 text-sm text-default-600">模板</p>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {(() => {
+                        const all = presetsFor(caps, form.kernelType);
+                        const isActive = (p: (typeof all)[number]) =>
                           form.protocol === p.protocol &&
                           form.transportType === p.transport &&
                           form.securityType === p.security;
+                        // Keep a chosen template in view even when folded.
+                        const folded =
+                          !showAllPresets &&
+                          all.length > PRESETS_SHOWN + 1 &&
+                          !all.slice(PRESETS_SHOWN).some(isActive);
+                        const shown = folded
+                          ? all.slice(0, PRESETS_SHOWN)
+                          : all;
 
                         return (
-                          <button
-                            key={p.key}
-                            className={`text-left rounded-xl border px-3 py-2 transition-colors ${
-                              active
-                                ? "border-primary bg-primary-50 dark:bg-primary-500/10"
-                                : "border-divider hover:bg-default-100"
-                            }`}
-                            type="button"
-                            onClick={() =>
-                              setForm((prev) => applyPreset(prev, p, caps))
-                            }
-                          >
-                            <div className="text-sm font-medium">{p.label}</div>
-                            <div className="text-xs text-default-500">
-                              {p.description}
-                            </div>
-                          </button>
+                          <>
+                            {shown.map((p) => (
+                              <button
+                                key={p.key}
+                                className={`rounded-lg border px-3 py-2 text-left transition-colors ${
+                                  isActive(p)
+                                    ? "border-foreground"
+                                    : "border-divider hover:bg-default-50"
+                                }`}
+                                type="button"
+                                onClick={() =>
+                                  setForm((prev) => applyPreset(prev, p, caps))
+                                }
+                              >
+                                <div className="text-sm">{p.label}</div>
+                                <div className="truncate text-xs text-default-400">
+                                  {p.description}
+                                </div>
+                              </button>
+                            ))}
+                            {folded && (
+                              <button
+                                className="flex items-center gap-1 rounded-lg border border-dashed border-divider px-3 py-2 text-left text-sm text-default-500 transition-colors hover:bg-default-50 hover:text-foreground"
+                                type="button"
+                                onClick={() => setShowAllPresets(true)}
+                              >
+                                更多模板（{all.length - PRESETS_SHOWN}）
+                                <ChevronDown className="h-4 w-4" />
+                              </button>
+                            )}
+                          </>
                         );
-                      })}
+                      })()}
                     </div>
                   </div>
                 )}
@@ -489,348 +517,14 @@ export function InboundFormModal({
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <Select
-                    label="协议"
-                    selectedKeys={[form.protocol]}
-                    onSelectionChange={(keys) =>
-                      changeProtocol(String(Array.from(keys)[0] ?? "vless"))
-                    }
-                  >
-                    {(kernelInfo?.protocols ?? []).map((p) => (
-                      <SelectItem
-                        key={p.protocol}
-                        textValue={PROTOCOL_LABELS[p.protocol] ?? p.protocol}
-                      >
-                        {PROTOCOL_LABELS[p.protocol] ?? p.protocol}
-                      </SelectItem>
-                    ))}
-                  </Select>
-                  <Select
-                    isDisabled={transports.length <= 1}
-                    label="传输"
-                    selectedKeys={[form.transportType]}
-                    onSelectionChange={(keys) =>
-                      changeTransport(String(Array.from(keys)[0] ?? "tcp"))
-                    }
-                  >
-                    {transports.map((t) => (
-                      <SelectItem
-                        key={t.type}
-                        textValue={TRANSPORT_LABELS[t.type] ?? t.type}
-                      >
-                        {TRANSPORT_LABELS[t.type] ?? t.type}
-                      </SelectItem>
-                    ))}
-                  </Select>
-                  <Select
-                    isDisabled={securities.length <= 1}
-                    label="安全"
-                    selectedKeys={[form.securityType]}
-                    onSelectionChange={(keys) =>
-                      changeSecurity(String(Array.from(keys)[0] ?? "none"))
-                    }
-                  >
-                    {securities.map((s) => (
-                      <SelectItem key={s} textValue={SECURITY_LABELS[s] ?? s}>
-                        {SECURITY_LABELS[s] ?? s}
-                      </SelectItem>
-                    ))}
-                  </Select>
-                </div>
-
-                {uuidProtocols.includes(form.protocol) && (
-                  <Input
-                    label="UUID"
-                    placeholder="留空自动生成"
-                    value={form.uuid}
-                    variant="bordered"
-                    onChange={(e) => set("uuid", e.target.value)}
-                  />
-                )}
-                {vlessEncAllowed(form) && (
-                  <div className="flex items-start gap-2">
-                    <Switch
-                      isSelected={form.vlessEnc}
-                      size="sm"
-                      onValueChange={(v) => set("vlessEnc", v)}
-                    />
-                    <div>
-                      <p className="text-sm">VLESS Encryption（抗量子加密）</p>
-                      <p className="text-xs text-default-500">
-                        不用证书也能防探测，密钥自动生成。客户端需要 Xray
-                        25.9+（v2rayN 等）或 Mihomo；sing-box、Surge
-                        等客户端的订阅里会略过它
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {visionAllowed(form) && (
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      isSelected={form.flowVision}
-                      size="sm"
-                      onValueChange={(v) => set("flowVision", v)}
-                    />
-                    <span className="text-sm">启用 XTLS Vision 流控</span>
-                  </div>
-                )}
-                {form.protocol === "shadowsocks" && (
-                  <Select
-                    label="加密方式"
-                    selectedKeys={[form.method]}
-                    onSelectionChange={(keys) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        method: String(Array.from(keys)[0] ?? prev.method),
-                        password: "",
-                      }))
-                    }
-                  >
-                    {(caps?.ssMethods ?? []).map((m) => (
-                      <SelectItem key={m} textValue={m}>
-                        {m}
-                      </SelectItem>
-                    ))}
-                  </Select>
-                )}
-                {usernameProtocols.includes(form.protocol) && (
-                  <Input
-                    label="用户名"
-                    placeholder="留空自动生成"
-                    value={form.username}
-                    variant="bordered"
-                    onChange={(e) => set("username", e.target.value)}
-                  />
-                )}
-                {passwordProtocols.includes(form.protocol) && (
-                  <Input
-                    description={
-                      form.protocol === "shadowsocks" &&
-                      form.method.startsWith("2022-")
-                        ? "SS2022 需要 base64 密钥，建议留空自动生成"
-                        : undefined
-                    }
-                    label={form.protocol === "snell" ? "PSK" : "密码"}
-                    placeholder="留空自动生成"
-                    value={form.password}
-                    variant="bordered"
-                    onChange={(e) => set("password", e.target.value)}
-                  />
-                )}
-
-                {form.protocol === "snell" && (
-                  <Select
-                    description={
-                      form.kernelType === "singbox"
-                        ? "客户端使用的协议版本；sing-box 内置 Snell 需要 1.14 及以上，v6 的 PSK 至少 12 位"
-                        : "客户端使用的协议版本，要和服务器上的 Snell 一致：v4 / v5 用 5.x（也可 4.x 跑 v4），v6 用 6.0.0（只接受 v6 客户端）"
-                    }
-                    label="Snell 版本"
-                    selectedKeys={[form.snellVersion || defaultSnellVersion]}
-                    onSelectionChange={(keys) =>
-                      set("snellVersion", String(Array.from(keys)[0] ?? "5"))
-                    }
-                  >
-                    {["6", "5", "4"].map((v) => (
-                      <SelectItem key={v} textValue={`v${v}`}>
-                        {`v${v}`}
-                      </SelectItem>
-                    ))}
-                  </Select>
-                )}
-                {form.protocol === "snell" && form.snellVersion === "6" && (
-                  <Select
-                    description="客户端要选同样的模式；unshaped 不做流量整形，更快但更容易被识别"
-                    label="流量整形"
-                    selectedKeys={[form.snellMode || "default"]}
-                    onSelectionChange={(keys) => {
-                      const v = String(Array.from(keys)[0] ?? "default");
-
-                      set("snellMode", v === "default" ? "" : v);
-                    }}
-                  >
-                    <SelectItem key="default" textValue="默认">
-                      默认
-                    </SelectItem>
-                    <SelectItem key="unshaped" textValue="unshaped">
-                      unshaped
-                    </SelectItem>
-                  </Select>
-                )}
                 {(form.protocol === "socks" || form.protocol === "http") && (
                   <p className="text-xs text-warning">
                     {PROTOCOL_LABELS[form.protocol]}
                     不加密，流量和密码都是明文，适合内网或经加密线路中转后使用
                   </p>
                 )}
-                {form.protocol === "wireguard" && (
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <Input
-                        description="服务端用同一网段的 .1"
-                        label="客户端地址"
-                        placeholder="10.66.66.2"
-                        value={form.wgPeerAddress}
-                        variant="bordered"
-                        onChange={(e) => set("wgPeerAddress", e.target.value)}
-                      />
-                      <Input
-                        label="MTU"
-                        placeholder="1420"
-                        value={form.wgMtu}
-                        variant="bordered"
-                        onChange={(e) => set("wgMtu", e.target.value)}
-                      />
-                    </div>
-                    <p className="text-xs text-default-500">
-                      密钥自动生成，所有人共用一份客户端配置（在“分享”里）；需要更换时用“换密钥”
-                    </p>
-                  </div>
-                )}
-                {form.protocol === "hysteria2" && (
-                  <Input
-                    description="非客户端访问时返回此网站内容，留空不伪装"
-                    label="伪装网站（可选）"
-                    placeholder="https://www.bing.com"
-                    value={form.masquerade}
-                    variant="bordered"
-                    onChange={(e) => set("masquerade", e.target.value)}
-                  />
-                )}
-                {form.protocol === "hysteria2" && (
-                  <Input
-                    description="客户端在这段 UDP 端口间随机切换，缓解运营商对单端口 UDP 的限速；服务器上由 nftables 转到入站端口。经中转连接时不跳跃"
-                    label="端口跳跃（可选）"
-                    placeholder="例如 20000-30000"
-                    value={form.portHopping}
-                    variant="bordered"
-                    onChange={(e) => set("portHopping", e.target.value)}
-                  />
-                )}
-
-                {(form.transportType === "ws" ||
-                  form.transportType === "xhttp") && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <Input
-                      label="路径"
-                      placeholder="留空随机"
-                      value={form.path}
-                      variant="bordered"
-                      onChange={(e) => set("path", e.target.value)}
-                    />
-                    <Input
-                      label="Host（可选）"
-                      value={form.host}
-                      variant="bordered"
-                      onChange={(e) => set("host", e.target.value)}
-                    />
-                  </div>
-                )}
-                {form.transportType === "xhttp" && (
-                  <Select
-                    label="XHTTP 模式"
-                    selectedKeys={[form.xhttpMode]}
-                    onSelectionChange={(keys) =>
-                      set("xhttpMode", String(Array.from(keys)[0] ?? "auto"))
-                    }
-                  >
-                    {XHTTP_MODES.map((m) => (
-                      <SelectItem key={m} textValue={m}>
-                        {m}
-                      </SelectItem>
-                    ))}
-                  </Select>
-                )}
-                {form.transportType === "grpc" && (
-                  <Input
-                    label="gRPC serviceName"
-                    placeholder="grpc"
-                    value={form.serviceName}
-                    variant="bordered"
-                    onChange={(e) => set("serviceName", e.target.value)}
-                  />
-                )}
-
-                {form.securityType === "reality" && (
-                  <div className="space-y-3 rounded-xl border border-divider p-3">
-                    <p className="text-sm font-medium">Reality</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <Input
-                        description="客户端使用的 SNI，需是支持 TLS1.3 的大站"
-                        label="伪装域名"
-                        value={form.sni}
-                        variant="bordered"
-                        onChange={(e) => set("sni", e.target.value)}
-                      />
-                      <Input
-                        description="留空则为 伪装域名:443"
-                        label="目标地址 (dest)"
-                        placeholder="www.example.com:443"
-                        value={form.realityDest}
-                        variant="bordered"
-                        onChange={(e) => set("realityDest", e.target.value)}
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <Input
-                        label="私钥"
-                        placeholder="留空自动生成"
-                        value={form.realityPrivateKey}
-                        variant="bordered"
-                        onChange={(e) =>
-                          set("realityPrivateKey", e.target.value)
-                        }
-                      />
-                      <Input
-                        label="shortId"
-                        placeholder="留空自动生成，多个用逗号分隔"
-                        value={form.realityShortIds}
-                        variant="bordered"
-                        onChange={(e) => set("realityShortIds", e.target.value)}
-                      />
-                    </div>
-                    {form.kernelType === "xray" && (
-                      <Input
-                        description="低于此版本的客户端会被拒绝。Xray 新版默认 26.3.27，会导致 Clash / Mihomo 等客户端连不上，保持 1.0.0 即可兼容所有客户端"
-                        label="最低客户端版本"
-                        placeholder="1.0.0"
-                        value={form.realityMinClientVer}
-                        variant="bordered"
-                        onChange={(e) =>
-                          set("realityMinClientVer", e.target.value)
-                        }
-                      />
-                    )}
-                  </div>
-                )}
-
-                {form.securityType === "shadowtls" && (
-                  <div className="space-y-3 rounded-xl border border-divider p-3">
-                    <p className="text-sm font-medium">ShadowTLS v3</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <Input
-                        description="握手转发到该网站的 443 端口，需支持 TLS1.3"
-                        label="伪装网站"
-                        value={form.sni}
-                        variant="bordered"
-                        onChange={(e) => set("sni", e.target.value)}
-                      />
-                      <Input
-                        label="ShadowTLS 密码"
-                        placeholder="留空自动生成"
-                        value={form.shadowTlsPassword}
-                        variant="bordered"
-                        onChange={(e) =>
-                          set("shadowTlsPassword", e.target.value)
-                        }
-                      />
-                    </div>
-                  </div>
-                )}
-
                 {form.securityType === "tls" && (
-                  <div className="space-y-3 rounded-xl border border-divider p-3">
+                  <div className="space-y-3 rounded-lg border border-divider p-3">
                     <p className="text-sm font-medium">TLS</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <Input
@@ -977,167 +671,534 @@ export function InboundFormModal({
                 )}
 
                 <button
-                  className="text-sm text-primary"
+                  aria-expanded={showAdvanced}
+                  className="flex items-center gap-1 whitespace-nowrap text-sm text-default-500 hover:text-foreground"
                   type="button"
                   onClick={() => setShowAdvanced((v) => !v)}
                 >
-                  {showAdvanced ? "收起高级选项" : "展开高级选项"}
+                  <ChevronRight
+                    className={`h-4 w-4 transition-transform ${showAdvanced ? "rotate-90" : ""}`}
+                  />
+                  高级设置
+                  {!showAdvanced && (
+                    <span className="hidden text-xs text-default-400 sm:inline">
+                      （协议、传输、UUID、密钥、监听与中转；留空自动生成）
+                    </span>
+                  )}
                 </button>
                 {showAdvanced && (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <Select
+                        label="协议"
+                        selectedKeys={[form.protocol]}
+                        onSelectionChange={(keys) =>
+                          changeProtocol(String(Array.from(keys)[0] ?? "vless"))
+                        }
+                      >
+                        {(kernelInfo?.protocols ?? []).map((p) => (
+                          <SelectItem
+                            key={p.protocol}
+                            textValue={
+                              PROTOCOL_LABELS[p.protocol] ?? p.protocol
+                            }
+                          >
+                            {PROTOCOL_LABELS[p.protocol] ?? p.protocol}
+                          </SelectItem>
+                        ))}
+                      </Select>
+                      <Select
+                        isDisabled={transports.length <= 1}
+                        label="传输"
+                        selectedKeys={[form.transportType]}
+                        onSelectionChange={(keys) =>
+                          changeTransport(String(Array.from(keys)[0] ?? "tcp"))
+                        }
+                      >
+                        {transports.map((t) => (
+                          <SelectItem
+                            key={t.type}
+                            textValue={TRANSPORT_LABELS[t.type] ?? t.type}
+                          >
+                            {TRANSPORT_LABELS[t.type] ?? t.type}
+                          </SelectItem>
+                        ))}
+                      </Select>
+                      <Select
+                        isDisabled={securities.length <= 1}
+                        label="安全"
+                        selectedKeys={[form.securityType]}
+                        onSelectionChange={(keys) =>
+                          changeSecurity(String(Array.from(keys)[0] ?? "none"))
+                        }
+                      >
+                        {securities.map((s) => (
+                          <SelectItem
+                            key={s}
+                            textValue={SECURITY_LABELS[s] ?? s}
+                          >
+                            {SECURITY_LABELS[s] ?? s}
+                          </SelectItem>
+                        ))}
+                      </Select>
+                    </div>
+
+                    {uuidProtocols.includes(form.protocol) && (
                       <Input
-                        description="默认 :: 监听所有地址；127.0.0.1 仅本机（配合隧道中转）"
-                        label="监听地址"
-                        value={form.listen}
+                        label="UUID"
+                        placeholder="留空自动生成"
+                        value={form.uuid}
                         variant="bordered"
-                        onChange={(e) => set("listen", e.target.value)}
+                        onChange={(e) => set("uuid", e.target.value)}
                       />
+                    )}
+                    {vlessEncAllowed(form) && (
+                      <div className="flex items-start gap-2">
+                        <Switch
+                          isSelected={form.vlessEnc}
+                          size="sm"
+                          onValueChange={(v) => set("vlessEnc", v)}
+                        />
+                        <div>
+                          <p className="text-sm">
+                            VLESS Encryption（抗量子加密）
+                          </p>
+                          <p className="text-xs text-default-500">
+                            不用证书也能防探测，密钥自动生成。客户端需要 Xray
+                            25.9+（v2rayN 等）或 Mihomo；sing-box、Surge
+                            等客户端的订阅里会略过它
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {visionAllowed(form) && (
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          isSelected={form.flowVision}
+                          size="sm"
+                          onValueChange={(v) => set("flowVision", v)}
+                        />
+                        <span className="text-sm">启用 XTLS Vision 流控</span>
+                      </div>
+                    )}
+                    {form.protocol === "shadowsocks" && (
+                      <Select
+                        label="加密方式"
+                        selectedKeys={[form.method]}
+                        onSelectionChange={(keys) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            method: String(Array.from(keys)[0] ?? prev.method),
+                            password: "",
+                          }))
+                        }
+                      >
+                        {(caps?.ssMethods ?? []).map((m) => (
+                          <SelectItem key={m} textValue={m}>
+                            {m}
+                          </SelectItem>
+                        ))}
+                      </Select>
+                    )}
+                    {usernameProtocols.includes(form.protocol) && (
+                      <Input
+                        label="用户名"
+                        placeholder="留空自动生成"
+                        value={form.username}
+                        variant="bordered"
+                        onChange={(e) => set("username", e.target.value)}
+                      />
+                    )}
+                    {passwordProtocols.includes(form.protocol) && (
+                      <Input
+                        description={
+                          form.protocol === "shadowsocks" &&
+                          form.method.startsWith("2022-")
+                            ? "SS2022 需要 base64 密钥，建议留空自动生成"
+                            : undefined
+                        }
+                        label={form.protocol === "snell" ? "PSK" : "密码"}
+                        placeholder="留空自动生成"
+                        value={form.password}
+                        variant="bordered"
+                        onChange={(e) => set("password", e.target.value)}
+                      />
+                    )}
+
+                    {form.protocol === "snell" && (
+                      <Select
+                        description={
+                          form.kernelType === "singbox"
+                            ? "客户端使用的协议版本；sing-box 内置 Snell 需要 1.14 及以上，v6 的 PSK 至少 12 位"
+                            : "客户端使用的协议版本，要和服务器上的 Snell 一致：v4 / v5 用 5.x（也可 4.x 跑 v4），v6 用 6.0.0（只接受 v6 客户端）"
+                        }
+                        label="Snell 版本"
+                        selectedKeys={[
+                          form.snellVersion || defaultSnellVersion,
+                        ]}
+                        onSelectionChange={(keys) =>
+                          set(
+                            "snellVersion",
+                            String(Array.from(keys)[0] ?? "5"),
+                          )
+                        }
+                      >
+                        {["6", "5", "4"].map((v) => (
+                          <SelectItem key={v} textValue={`v${v}`}>
+                            {`v${v}`}
+                          </SelectItem>
+                        ))}
+                      </Select>
+                    )}
+                    {form.protocol === "snell" && form.snellVersion === "6" && (
+                      <Select
+                        description="客户端要选同样的模式；unshaped 不做流量整形，更快但更容易被识别"
+                        label="流量整形"
+                        selectedKeys={[form.snellMode || "default"]}
+                        onSelectionChange={(keys) => {
+                          const v = String(Array.from(keys)[0] ?? "default");
+
+                          set("snellMode", v === "default" ? "" : v);
+                        }}
+                      >
+                        <SelectItem key="default" textValue="默认">
+                          默认
+                        </SelectItem>
+                        <SelectItem key="unshaped" textValue="unshaped">
+                          unshaped
+                        </SelectItem>
+                      </Select>
+                    )}
+                    {form.protocol === "wireguard" && (
                       <div className="space-y-2">
-                        <Select
-                          disabledKeys={[
-                            ...(shareV4 ? [] : ["ipv4"]),
-                            ...(shareV6 ? [] : ["ipv6"]),
-                          ]}
-                          label="分享地址"
-                          selectedKeys={[form.shareAddressMode]}
-                          onSelectionChange={(keys) =>
-                            set(
-                              "shareAddressMode",
-                              String(
-                                Array.from(keys)[0] ?? "auto",
-                              ) as InboundForm["shareAddressMode"],
-                            )
-                          }
-                        >
-                          <SelectItem
-                            key="auto"
-                            textValue="自动（服务器默认地址）"
-                          >
-                            自动（服务器默认地址）
-                          </SelectItem>
-                          <SelectItem
-                            key="ipv4"
-                            textValue={`服务器 IPv4${shareV4 ? ` · ${shareV4}` : "（未设置）"}`}
-                          >
-                            服务器 IPv4
-                            {shareV4 ? ` · ${shareV4}` : "（未设置）"}
-                          </SelectItem>
-                          <SelectItem
-                            key="ipv6"
-                            textValue={`服务器 IPv6${shareV6 ? ` · ${shareV6}` : "（未设置）"}`}
-                          >
-                            服务器 IPv6
-                            {shareV6 ? ` · ${shareV6}` : "（未设置）"}
-                          </SelectItem>
-                          <SelectItem key="custom" textValue="自定义域名 / IP">
-                            自定义域名 / IP
-                          </SelectItem>
-                        </Select>
-                        {form.shareAddressMode === "custom" && (
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                           <Input
-                            aria-label="自定义分享地址"
-                            placeholder="域名或 IP，不含端口"
-                            value={form.shareHost}
+                            description="服务端用同一网段的 .1"
+                            label="客户端地址"
+                            placeholder="10.66.66.2"
+                            value={form.wgPeerAddress}
                             variant="bordered"
-                            onChange={(e) => set("shareHost", e.target.value)}
+                            onChange={(e) =>
+                              set("wgPeerAddress", e.target.value)
+                            }
                           />
-                        )}
+                          <Input
+                            label="MTU"
+                            placeholder="1420"
+                            value={form.wgMtu}
+                            variant="bordered"
+                            onChange={(e) => set("wgMtu", e.target.value)}
+                          />
+                        </div>
                         <p className="text-xs text-default-500">
-                          决定分享和订阅中的入口地址，与出站策略独立。IPv4 /
-                          IPv6 随服务器设置更新；监听地址需支持对应类型。
+                          密钥自动生成，所有人共用一份客户端配置（在“分享”里）；需要更换时用“换密钥”
                         </p>
                       </div>
-                    </div>
-                    <OutboundIPSelect
-                      kernelType={form.kernelType}
-                      value={form.outboundIpStrategy}
-                      onChange={(value) => set("outboundIpStrategy", value)}
-                    />
-                    <div className="space-y-3 rounded-xl border border-divider p-3">
-                      <p className="text-sm font-medium">中转相关</p>
-                      <div className="flex items-start gap-2">
-                        <Switch
-                          isDisabled={form.acceptProxyProtocol}
-                          isSelected={
-                            form.relayOnly || form.acceptProxyProtocol
-                          }
-                          size="sm"
-                          onValueChange={(v) => set("relayOnly", v)}
-                        />
-                        <div>
-                          <p className="text-sm">仅通过中转提供</p>
-                          <p className="text-xs text-default-500">
-                            订阅和分享中不再给出这个节点的直连地址
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <Switch
-                          isDisabled={
-                            form.kernelType !== "xray" &&
-                            !form.acceptProxyProtocol
-                          }
-                          isSelected={form.acceptProxyProtocol}
-                          size="sm"
-                          onValueChange={(v) => set("acceptProxyProtocol", v)}
-                        />
-                        <div>
-                          <p className="text-sm">
-                            获取真实客户端 IP（PROXY protocol）
-                          </p>
-                          <p className="text-xs text-default-500">
-                            {form.kernelType === "xray"
-                              ? "中转转发会附带客户端地址，节点的内核日志可见真实 IP。开启后直连将无法使用，自动变为仅中转"
-                              : "目前只有 Xray 内核支持"}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <Switch
-                          isSelected={form.relayWhitelist}
-                          size="sm"
-                          onValueChange={(v) => set("relayWhitelist", v)}
-                        />
-                        <div>
-                          <p className="text-sm">
-                            仅允许中转机访问（防火墙白名单）
-                          </p>
-                          <p className="text-xs text-default-500">
-                            只放行已对接中转的入口服务器 IP
-                            和本机，其他来源访问该端口一律丢弃；需要服务器安装
-                            nftables
-                          </p>
-                        </div>
-                      </div>
-                      {form.relayWhitelist && (
+                    )}
+                    {form.protocol === "hysteria2" && (
+                      <Input
+                        description="非客户端访问时返回此网站内容，留空不伪装"
+                        label="伪装网站（可选）"
+                        placeholder="https://www.bing.com"
+                        value={form.masquerade}
+                        variant="bordered"
+                        onChange={(e) => set("masquerade", e.target.value)}
+                      />
+                    )}
+                    {form.protocol === "hysteria2" && (
+                      <Input
+                        description="客户端在这段 UDP 端口间随机切换，缓解运营商对单端口 UDP 的限速；服务器上由 nftables 转到入站端口。经中转连接时不跳跃"
+                        label="端口跳跃（可选）"
+                        placeholder="例如 20000-30000"
+                        value={form.portHopping}
+                        variant="bordered"
+                        onChange={(e) => set("portHopping", e.target.value)}
+                      />
+                    )}
+
+                    {(form.transportType === "ws" ||
+                      form.transportType === "xhttp") && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <Input
-                          description="中转机出口 IP 与服务器地址不同时，在此补充；支持 IP 和网段，逗号分隔"
-                          label="额外放行"
-                          placeholder="203.0.113.9, 10.0.0.0/8"
-                          value={form.whitelistExtra}
+                          label="路径"
+                          placeholder="留空随机"
+                          value={form.path}
                           variant="bordered"
-                          onChange={(e) =>
-                            set("whitelistExtra", e.target.value)
-                          }
+                          onChange={(e) => set("path", e.target.value)}
                         />
-                      )}
+                        <Input
+                          label="Host（可选）"
+                          value={form.host}
+                          variant="bordered"
+                          onChange={(e) => set("host", e.target.value)}
+                        />
+                      </div>
+                    )}
+                    {form.transportType === "xhttp" && (
+                      <Select
+                        label="XHTTP 模式"
+                        selectedKeys={[form.xhttpMode]}
+                        onSelectionChange={(keys) =>
+                          set(
+                            "xhttpMode",
+                            String(Array.from(keys)[0] ?? "auto"),
+                          )
+                        }
+                      >
+                        {XHTTP_MODES.map((m) => (
+                          <SelectItem key={m} textValue={m}>
+                            {m}
+                          </SelectItem>
+                        ))}
+                      </Select>
+                    )}
+                    {form.transportType === "grpc" && (
+                      <Input
+                        label="gRPC serviceName"
+                        placeholder="grpc"
+                        value={form.serviceName}
+                        variant="bordered"
+                        onChange={(e) => set("serviceName", e.target.value)}
+                      />
+                    )}
+
+                    {form.securityType === "reality" && (
+                      <div className="space-y-3 rounded-lg border border-divider p-3">
+                        <p className="text-sm font-medium">Reality</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <Input
+                            description="客户端使用的 SNI，需是支持 TLS1.3 的大站"
+                            label="伪装域名"
+                            value={form.sni}
+                            variant="bordered"
+                            onChange={(e) => set("sni", e.target.value)}
+                          />
+                          <Input
+                            description="留空则为 伪装域名:443"
+                            label="目标地址 (dest)"
+                            placeholder="www.example.com:443"
+                            value={form.realityDest}
+                            variant="bordered"
+                            onChange={(e) => set("realityDest", e.target.value)}
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <Input
+                            label="私钥"
+                            placeholder="留空自动生成"
+                            value={form.realityPrivateKey}
+                            variant="bordered"
+                            onChange={(e) =>
+                              set("realityPrivateKey", e.target.value)
+                            }
+                          />
+                          <Input
+                            label="shortId"
+                            placeholder="留空自动生成，多个用逗号分隔"
+                            value={form.realityShortIds}
+                            variant="bordered"
+                            onChange={(e) =>
+                              set("realityShortIds", e.target.value)
+                            }
+                          />
+                        </div>
+                        {form.kernelType === "xray" && (
+                          <Input
+                            description="低于此版本的客户端会被拒绝。Xray 新版默认 26.3.27，会导致 Clash / Mihomo 等客户端连不上，保持 1.0.0 即可兼容所有客户端"
+                            label="最低客户端版本"
+                            placeholder="1.0.0"
+                            value={form.realityMinClientVer}
+                            variant="bordered"
+                            onChange={(e) =>
+                              set("realityMinClientVer", e.target.value)
+                            }
+                          />
+                        )}
+                      </div>
+                    )}
+
+                    {form.securityType === "shadowtls" && (
+                      <div className="space-y-3 rounded-lg border border-divider p-3">
+                        <p className="text-sm font-medium">ShadowTLS v3</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <Input
+                            description="握手转发到该网站的 443 端口，需支持 TLS1.3"
+                            label="伪装网站"
+                            value={form.sni}
+                            variant="bordered"
+                            onChange={(e) => set("sni", e.target.value)}
+                          />
+                          <Input
+                            label="ShadowTLS 密码"
+                            placeholder="留空自动生成"
+                            value={form.shadowTlsPassword}
+                            variant="bordered"
+                            onChange={(e) =>
+                              set("shadowTlsPassword", e.target.value)
+                            }
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-3 border-t border-divider pt-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Input
+                          description="默认 :: 监听所有地址；127.0.0.1 仅本机（配合隧道中转）"
+                          label="监听地址"
+                          value={form.listen}
+                          variant="bordered"
+                          onChange={(e) => set("listen", e.target.value)}
+                        />
+                        <div className="space-y-2">
+                          <Select
+                            disabledKeys={[
+                              ...(shareV4 ? [] : ["ipv4"]),
+                              ...(shareV6 ? [] : ["ipv6"]),
+                            ]}
+                            label="分享地址"
+                            selectedKeys={[form.shareAddressMode]}
+                            onSelectionChange={(keys) =>
+                              set(
+                                "shareAddressMode",
+                                String(
+                                  Array.from(keys)[0] ?? "auto",
+                                ) as InboundForm["shareAddressMode"],
+                              )
+                            }
+                          >
+                            <SelectItem
+                              key="auto"
+                              textValue="自动（服务器默认地址）"
+                            >
+                              自动（服务器默认地址）
+                            </SelectItem>
+                            <SelectItem
+                              key="ipv4"
+                              textValue={`服务器 IPv4${shareV4 ? ` · ${shareV4}` : "（未设置）"}`}
+                            >
+                              服务器 IPv4
+                              {shareV4 ? ` · ${shareV4}` : "（未设置）"}
+                            </SelectItem>
+                            <SelectItem
+                              key="ipv6"
+                              textValue={`服务器 IPv6${shareV6 ? ` · ${shareV6}` : "（未设置）"}`}
+                            >
+                              服务器 IPv6
+                              {shareV6 ? ` · ${shareV6}` : "（未设置）"}
+                            </SelectItem>
+                            <SelectItem
+                              key="custom"
+                              textValue="自定义域名 / IP"
+                            >
+                              自定义域名 / IP
+                            </SelectItem>
+                          </Select>
+                          {form.shareAddressMode === "custom" && (
+                            <Input
+                              aria-label="自定义分享地址"
+                              placeholder="域名或 IP，不含端口"
+                              value={form.shareHost}
+                              variant="bordered"
+                              onChange={(e) => set("shareHost", e.target.value)}
+                            />
+                          )}
+                          <p className="text-xs text-default-500">
+                            决定分享和订阅中的入口地址，与出站策略独立。IPv4 /
+                            IPv6 随服务器设置更新；监听地址需支持对应类型。
+                          </p>
+                        </div>
+                      </div>
+                      <OutboundIPSelect
+                        kernelType={form.kernelType}
+                        value={form.outboundIpStrategy}
+                        onChange={(value) => set("outboundIpStrategy", value)}
+                      />
+                      <div className="space-y-3 rounded-lg border border-divider p-3">
+                        <p className="text-sm font-medium">中转相关</p>
+                        <div className="flex items-start gap-2">
+                          <Switch
+                            isDisabled={form.acceptProxyProtocol}
+                            isSelected={
+                              form.relayOnly || form.acceptProxyProtocol
+                            }
+                            size="sm"
+                            onValueChange={(v) => set("relayOnly", v)}
+                          />
+                          <div>
+                            <p className="text-sm">仅通过中转提供</p>
+                            <p className="text-xs text-default-500">
+                              订阅和分享中不再给出这个节点的直连地址
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <Switch
+                            isDisabled={
+                              form.kernelType !== "xray" &&
+                              !form.acceptProxyProtocol
+                            }
+                            isSelected={form.acceptProxyProtocol}
+                            size="sm"
+                            onValueChange={(v) => set("acceptProxyProtocol", v)}
+                          />
+                          <div>
+                            <p className="text-sm">
+                              获取真实客户端 IP（PROXY protocol）
+                            </p>
+                            <p className="text-xs text-default-500">
+                              {form.kernelType === "xray"
+                                ? "中转转发会附带客户端地址，节点的内核日志可见真实 IP。开启后直连将无法使用，自动变为仅中转"
+                                : "目前只有 Xray 内核支持"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <Switch
+                            isSelected={form.relayWhitelist}
+                            size="sm"
+                            onValueChange={(v) => set("relayWhitelist", v)}
+                          />
+                          <div>
+                            <p className="text-sm">
+                              仅允许中转机访问（防火墙白名单）
+                            </p>
+                            <p className="text-xs text-default-500">
+                              只放行已对接中转的入口服务器 IP
+                              和本机，其他来源访问该端口一律丢弃；需要服务器安装
+                              nftables
+                            </p>
+                          </div>
+                        </div>
+                        {form.relayWhitelist && (
+                          <Input
+                            description="中转机出口 IP 与服务器地址不同时，在此补充；支持 IP 和网段，逗号分隔"
+                            label="额外放行"
+                            placeholder="203.0.113.9, 10.0.0.0/8"
+                            value={form.whitelistExtra}
+                            variant="bordered"
+                            onChange={(e) =>
+                              set("whitelistExtra", e.target.value)
+                            }
+                          />
+                        )}
+                      </div>
+                      <Input
+                        label="备注"
+                        value={form.remark}
+                        variant="bordered"
+                        onChange={(e) => set("remark", e.target.value)}
+                      />
+                      <Textarea
+                        description="内核原生字段，深度合并到该入站配置中（例如 sniffing、sockopt）"
+                        label="高级配置 (JSON)"
+                        minRows={3}
+                        placeholder='{"streamSettings":{"sockopt":{"tcpFastOpen":true}}}'
+                        value={form.extra}
+                        variant="bordered"
+                        onChange={(e) => set("extra", e.target.value)}
+                      />
                     </div>
-                    <Input
-                      label="备注"
-                      value={form.remark}
-                      variant="bordered"
-                      onChange={(e) => set("remark", e.target.value)}
-                    />
-                    <Textarea
-                      description="内核原生字段，深度合并到该入站配置中（例如 sniffing、sockopt）"
-                      label="高级配置 (JSON)"
-                      minRows={3}
-                      placeholder='{"streamSettings":{"sockopt":{"tcpFastOpen":true}}}'
-                      value={form.extra}
-                      variant="bordered"
-                      onChange={(e) => set("extra", e.target.value)}
-                    />
                   </div>
                 )}
               </div>

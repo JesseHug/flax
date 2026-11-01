@@ -22,7 +22,7 @@ export function SubClientGrid({
   configClients?: string[];
 }) {
   return (
-    <div className="grid grid-cols-2 gap-1.5">
+    <div className="flex flex-wrap gap-1.5 sm:grid sm:grid-cols-4">
       {SUB_CLIENTS.map((c) => {
         const url = link(c.format);
         const isConfig =
@@ -45,10 +45,10 @@ export function SubClientGrid({
         return (
           <div
             key={c.key}
-            className="relative flex h-11 items-center rounded-xl border border-divider transition-colors hover:bg-default-100"
+            className="relative flex h-9 items-center rounded-md border border-divider transition-colors hover:bg-default-50"
           >
             <button
-              className="h-full min-w-0 flex-1 truncate pl-3 pr-9 text-left text-sm font-medium"
+              className="h-full min-w-0 flex-1 truncate px-3 text-left text-xs sm:pl-2.5 sm:pr-7"
               title={
                 importURL
                   ? `导入到 ${c.label}`
@@ -63,11 +63,11 @@ export function SubClientGrid({
             </button>
             <button
               aria-label={`复制 ${c.label} 订阅链接`}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-default-400 hover:bg-default-200 hover:text-default-600"
+              className="absolute right-1 top-1/2 hidden -translate-y-1/2 rounded p-1 text-default-300 hover:bg-default-100 hover:text-foreground sm:block"
               type="button"
               onClick={() => copyText(url, `${c.label} 订阅已复制`)}
             >
-              <Copy className="h-3.5 w-3.5" />
+              <Copy className="h-3 w-3" />
             </button>
           </div>
         );

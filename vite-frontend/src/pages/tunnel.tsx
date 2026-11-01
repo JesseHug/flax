@@ -1539,7 +1539,7 @@ export default function TunnelPage({
             items={sortableTunnelIds}
             strategy={rectSortingStrategy}
           >
-            <div className="grid grid-cols-1 gap-2 2xl:grid-cols-2">
+            <div className="flex flex-col">
               {sortedTunnels.map((tunnel) => {
                 const bestExit = tunnel.bestExitState?.enabled
                   ? tunnel.bestExitState

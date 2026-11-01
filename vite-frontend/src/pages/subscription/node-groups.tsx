@@ -156,11 +156,11 @@ export function NodeGroupList({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-2 2xl:grid-cols-2">
+    <div className="flex flex-col">
       {groups.map((g, i) => (
         <div
           key={g.id}
-          className="flex cursor-pointer items-center gap-3 rounded-xl border border-divider bg-content1 px-3 py-2.5 shadow-sm transition-colors hover:bg-default-100"
+          className="group flex cursor-pointer items-center gap-3 border-b border-divider px-2 py-3 transition-colors hover:bg-default-50"
           role="button"
           tabIndex={0}
           onClick={() => onEdit(g)}
@@ -174,14 +174,14 @@ export function NodeGroupList({
         >
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <span className="truncate font-medium">{g.name}</span>
+              <span className="truncate">{g.name}</span>
               {g.subscriptions.length === 0 && (
                 <Chip size="sm" variant="flat">
                   未使用
                 </Chip>
               )}
             </div>
-            <div className="truncate text-xs text-default-500">
+            <div className="truncate text-xs text-default-400">
               {g.nodeCount} 个节点 · {groupSourceText(g)}
               {[filterSummary(g.options), namingSummary(g.options)]
                 .filter(Boolean)
@@ -196,7 +196,7 @@ export function NodeGroupList({
             )}
           </div>
           <div
-            className="flex shrink-0 items-center gap-1"
+            className="flex shrink-0 items-center gap-1 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
             role="presentation"
             onClick={(e) => e.stopPropagation()}
           >
@@ -434,7 +434,7 @@ export function NodeGroupEditor({
                   包括以后新增的节点和订阅源；只想要一部分可以在“处理”里筛选
                 </p>
               ) : (
-                <div className="max-h-56 space-y-3 overflow-y-auto rounded-xl border border-divider p-2">
+                <div className="max-h-56 space-y-3 overflow-y-auto rounded-lg border border-divider p-2">
                   {pickList("自建", selfBuilt)}
                   {pickList("导入", imported)}
                   {sources.length > 0 && (
@@ -640,7 +640,7 @@ export function NodeGroupEditor({
               </p>
             )}
             {preview?.scriptError && (
-              <p className="rounded-xl bg-danger-50 px-3 py-2 text-xs text-danger dark:bg-danger-500/10">
+              <p className="rounded-lg bg-danger-50 px-3 py-2 text-xs text-danger dark:bg-danger-500/10">
                 {preview.scriptError}；节点组会先不经过脚本输出
               </p>
             )}
@@ -657,7 +657,7 @@ export function NodeGroupEditor({
                     刷新
                   </button>
                 </p>
-                <div className="max-h-96 overflow-y-auto rounded-xl border border-divider">
+                <div className="max-h-96 overflow-y-auto rounded-lg border border-divider">
                   {preview.items.length === 0 ? (
                     <p className="p-3 text-xs text-default-500">没有节点</p>
                   ) : (

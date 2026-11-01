@@ -642,7 +642,7 @@ export default function InboundPage() {
     }
   };
 
-  const gridClass = card ? CARD_GRID : "grid grid-cols-1 gap-2 2xl:grid-cols-2";
+  const gridClass = card ? CARD_GRID : "flex flex-col";
 
   const renderInbound = (item: InboundApiItem) => {
     const probe = item.probe?.skipped ? undefined : item.probe;
@@ -854,10 +854,8 @@ export default function InboundPage() {
       <div
         key={item.id}
         aria-pressed={selectMode ? selected : undefined}
-        className={`flex w-full cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 text-left shadow-sm transition-colors ${
-          selected
-            ? "border-primary bg-primary-50/70 dark:bg-primary-900/40"
-            : "border-divider bg-content1 hover:bg-default-100"
+        className={`group flex w-full cursor-pointer items-center gap-3 border-b border-divider px-2 py-3 text-left transition-colors ${
+          selected ? "bg-default-100" : "hover:bg-default-50"
         }`}
         role="button"
         tabIndex={0}
@@ -884,18 +882,16 @@ export default function InboundPage() {
           </div>
         )}
         <span
-          className={`h-2 w-2 shrink-0 rounded-full ${dotClass}`}
+          className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotClass}`}
           title={stateText}
         />
         <div className="min-w-0 flex-1">
           {/* Badges wrap under the name rather than squeezing it out. */}
           <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-            <span className="min-w-0 max-w-full truncate font-medium">
-              {item.name}
-            </span>
+            <span className="min-w-0 max-w-full truncate">{item.name}</span>
             {badges}
           </div>
-          <div className="truncate text-xs text-default-500">
+          <div className="truncate text-xs text-default-400">
             {describeInbound(item)} · {item.port}
             {where ? ` · ${where}` : ""}
             <span className="sm:hidden">
@@ -907,29 +903,22 @@ export default function InboundPage() {
         {latency && (
           <div className="flex shrink-0 justify-end sm:w-32">{latency}</div>
         )}
-        <div className="hidden shrink-0 text-right font-mono text-xs text-default-500 sm:block">
-          <div>↑ {formatTraffic(item.uploadBytes)}</div>
-          <div>↓ {formatTraffic(item.downloadBytes)}</div>
-        </div>
         <div
-          className={`hidden shrink-0 gap-1 ${selectMode ? "" : "md:flex"}`}
+          className="hidden w-36 shrink-0 text-right text-sm tabular-nums sm:block"
+          title={`↑ ${formatTraffic(item.uploadBytes)} · ↓ ${formatTraffic(item.downloadBytes)}`}
+        >
+          {formatTraffic(item.uploadBytes + item.downloadBytes)}
+        </div>
+        {/* Quick actions appear on hover; the row's menu has them too. */}
+        <div
+          className={`hidden shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100 ${selectMode ? "" : "md:flex"}`}
           role="presentation"
           onClick={(e) => e.stopPropagation()}
         >
-          <Button
-            color="primary"
-            size="sm"
-            variant="flat"
-            onPress={() => setSharing(item)}
-          >
+          <Button size="sm" variant="light" onPress={() => setSharing(item)}>
             分享
           </Button>
-          <Button
-            color="secondary"
-            size="sm"
-            variant="flat"
-            onPress={() => setRelaying(item)}
-          >
+          <Button size="sm" variant="light" onPress={() => setRelaying(item)}>
             中转
           </Button>
         </div>
@@ -969,7 +958,7 @@ export default function InboundPage() {
     ];
 
   return (
-    <AnimatedPage className="px-3 lg:px-6 py-6">
+    <AnimatedPage className="px-4 py-6 lg:px-10 lg:py-8">
       <PageHeader
         description="客户端最终连上的节点：在自己的服务器上搭建，或导入现成的"
         title="节点"
@@ -1023,7 +1012,7 @@ export default function InboundPage() {
                 <div className="relative max-w-[10rem] shrink-0">
                   <select
                     aria-label="按服务器筛选"
-                    className="h-9 w-full appearance-none truncate rounded-full bg-default-100 pl-3.5 pr-8 text-sm outline-none"
+                    className="h-8 w-full appearance-none truncate rounded-md bg-transparent pl-2.5 pr-8 text-sm text-default-500 outline-none hover:bg-default-100 hover:text-foreground"
                     value={nodeFilter}
                     onChange={(e) => setNodeFilter(e.target.value)}
                   >
@@ -1034,14 +1023,14 @@ export default function InboundPage() {
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-default-500" />
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-default-400" />
                 </div>
               )}
               {allTags.length > 0 && (
                 <div className="relative max-w-[8rem] shrink-0">
                   <select
                     aria-label="按标签筛选"
-                    className="h-9 w-full appearance-none truncate rounded-full bg-default-100 pl-3.5 pr-8 text-sm outline-none"
+                    className="h-8 w-full appearance-none truncate rounded-md bg-transparent pl-2.5 pr-8 text-sm text-default-500 outline-none hover:bg-default-100 hover:text-foreground"
                     value={activeTag}
                     onChange={(e) => setTagFilter(e.target.value)}
                   >
@@ -1052,14 +1041,14 @@ export default function InboundPage() {
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-default-500" />
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-default-400" />
                 </div>
               )}
             </PageToolbar>
           )}
 
           {selectMode && (
-            <div className="sticky top-0 z-10 mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-divider bg-background/95 px-3 py-2 shadow-sm backdrop-blur">
+            <div className="sticky top-0 z-10 mb-2 flex flex-wrap items-center gap-2 border-b border-divider bg-background py-2">
               <span className="text-sm text-default-600">
                 已选 {selectedIds.size} 个
               </span>
@@ -1165,7 +1154,7 @@ export default function InboundPage() {
               ))}
             </StaggerList>
           ) : (
-            <div className="space-y-1">
+            <div>
               {inboundGroups.map((g) => {
                 const id = `inbound:node:${g.key}`;
                 const folded = isCollapsed(id);
@@ -1188,7 +1177,9 @@ export default function InboundPage() {
                       onToggle={() => toggleCollapsed(id)}
                     />
                     {!folded && (
-                      <div className={`${gridClass} pb-3`}>
+                      <div
+                        className={card ? `${gridClass} pb-3 pt-2` : gridClass}
+                      >
                         {g.items.map(renderInbound)}
                       </div>
                     )}

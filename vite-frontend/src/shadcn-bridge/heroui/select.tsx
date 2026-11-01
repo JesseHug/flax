@@ -369,7 +369,7 @@ export function Select<T>({
             aria-haspopup="listbox"
             aria-label={label ? undefined : ariaLabel}
             className={cn(
-              "flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-md border border-input bg-background px-3 py-2 text-left shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-md border border-input bg-background px-3 py-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               isDisabled ? "cursor-not-allowed opacity-60" : "",
               classNames?.trigger,
             )}
@@ -400,37 +400,40 @@ export function Select<T>({
           {renderMultipleListbox()}
         </div>
       ) : (
-        <select
-          aria-label={label ? undefined : ariaLabel}
-          className={cn(
-            "w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:[color-scheme:dark]",
-            sizeClass(size),
-            classNames?.trigger,
-            className,
-          )}
-          disabled={isDisabled}
-          id={generatedId}
-          required={isRequired}
-          value={singleValue}
-          onChange={handleChange}
-          onClick={onClick}
-        >
-          {/* Native pickers list every option: the placeholder only stands
+        <div className="relative w-full">
+          <select
+            aria-label={label ? undefined : ariaLabel}
+            className={cn(
+              "w-full appearance-none rounded-md border border-input bg-background py-2 pl-3 pr-9 text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:[color-scheme:dark]",
+              sizeClass(size),
+              classNames?.trigger,
+              className,
+            )}
+            disabled={isDisabled}
+            id={generatedId}
+            required={isRequired}
+            value={singleValue}
+            onChange={handleChange}
+            onClick={onClick}
+          >
+            {/* Native pickers list every option: the placeholder only stands
               in while nothing is chosen. */}
-          {singleValue === "" && !options.some((o) => o.key === "") && (
-            <option value="">{placeholder ?? "请选择"}</option>
-          )}
-          {options.map((option) => (
-            <option
-              key={option.key}
-              className="bg-background text-foreground"
-              disabled={disabled.has(option.key)}
-              value={option.key}
-            >
-              {option.label}
-            </option>
-          ))}
-        </select>
+            {singleValue === "" && !options.some((o) => o.key === "") && (
+              <option value="">{placeholder ?? "请选择"}</option>
+            )}
+            {options.map((option) => (
+              <option
+                key={option.key}
+                className="bg-background text-foreground"
+                disabled={disabled.has(option.key)}
+                value={option.key}
+              >
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-default-400" />
+        </div>
       )}
     </FieldContainer>
   );

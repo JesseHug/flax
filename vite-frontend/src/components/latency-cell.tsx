@@ -20,10 +20,11 @@ const CARD_POINTS = 3;
 type Tone = "success" | "warning" | "danger" | "default";
 
 export const TONE: Record<Tone, [string, string]> = {
-  success: ["bg-emerald-500/15 text-emerald-600", "bg-emerald-500"],
-  warning: ["bg-amber-500/15 text-amber-600", "bg-amber-500"],
-  danger: ["bg-rose-500/15 text-rose-600", "bg-rose-500"],
-  default: ["bg-default-200/70 text-default-500", "bg-default-400"],
+  // Minimal: plain text, colored only when something needs a look.
+  success: ["bg-transparent text-foreground", "bg-success"],
+  warning: ["bg-transparent text-warning-600", "bg-warning"],
+  danger: ["bg-transparent text-danger", "bg-danger"],
+  default: ["bg-transparent text-default-400", "bg-default-400"],
 };
 
 const RANK: Record<Tone, number> = {
@@ -127,25 +128,21 @@ function Pill({
   label?: boolean;
   spinning?: boolean;
 }) {
-  const [pill, dot] = TONE[pointTone(point)];
+  const [pill] = TONE[pointTone(point)];
   const loss = point.ok ? (point.lossPct ?? 0) : 0;
 
   return (
     <span
-      className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${pill}`}
+      className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-sm tabular-nums ${pill}`}
     >
-      {spinning ? (
-        <Loader2 className="h-3 w-3 animate-spin" />
-      ) : (
-        <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
-      )}
+      {spinning && <Loader2 className="h-3 w-3 animate-spin" />}
       {label && (
-        <span className="hidden font-sans opacity-80 sm:inline">
+        <span className="hidden text-xs text-default-400 sm:inline">
           {point.name}
         </span>
       )}
-      <span className="font-mono">{valueText(point)}</span>
-      {loss > 0 && <span className="font-mono opacity-80">丢{loss}%</span>}
+      <span>{valueText(point)}</span>
+      {loss > 0 && <span className="text-xs">丢包 {loss}%</span>}
     </span>
   );
 }
@@ -316,15 +313,10 @@ export function LatencyCell({
             onKeyDown={stop}
           >
             <Pill label={points.length > 1} point={worst} spinning={probing} />
+            {/* The other points are in the menu; only flag that they
+                exist. */}
             {others.length > 0 && (
-              <span className="flex items-center gap-0.5">
-                {others.map((p) => (
-                  <span
-                    key={p.name}
-                    className={`h-1.5 w-1.5 rounded-full ${TONE[pointTone(p)][1]}`}
-                  />
-                ))}
-              </span>
+              <span className="text-xs text-default-300">+{others.length}</span>
             )}
           </button>
         )}

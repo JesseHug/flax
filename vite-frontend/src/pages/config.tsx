@@ -1465,10 +1465,10 @@ export default function ConfigPage() {
               <button
                 key={option.value}
                 aria-pressed={isSelected}
-                className={`w-full px-3 py-2 rounded-lg border transition-all duration-200 cursor-pointer text-left ${
+                className={`w-full cursor-pointer rounded-md border px-3 py-2 text-left transition-colors ${
                   isSelected
-                    ? "bg-primary-50 dark:bg-primary-900/20 border-primary-300 dark:border-primary-500/50 shadow-sm"
-                    : "bg-white dark:bg-default-50 border-default-200 dark:border-default-100/30 hover:border-primary-200 dark:hover:border-primary-500/30 hover:shadow-sm"
+                    ? "border-foreground"
+                    : "border-divider hover:bg-default-50"
                 }`}
                 type="button"
                 onClick={() => toggleTypeSelection(option.value, setTypes)}
@@ -1549,13 +1549,13 @@ export default function ConfigPage() {
     .join(" · ");
 
   return (
-    <AnimatedPage className="mx-auto max-w-3xl px-3 py-6 lg:px-6">
+    <AnimatedPage className="max-w-3xl px-4 py-6 lg:px-10 lg:py-8">
       <PageHeader
         description="面板名称、登录安全、通知、备份与升级"
         title="网站配置"
       />
 
-      <div className="space-y-2">
+      <div className="border-t border-divider">
         <ConfigSection
           {...sectionProps("basic")}
           summary={`${configs.app_name || "未设置名称"} · ${
@@ -1581,7 +1581,7 @@ export default function ConfigPage() {
           {renderItem("app_bg_image")}
           {renderItem("forward_compact_mode")}
           <SubHeading>主题（点选即生效，不需要保存）</SubHeading>
-          <div className="[&_[data-slot=card-content]]:p-0! [&_h2]:hidden [&>[data-slot=card]]:rounded-none! [&>[data-slot=card]]:bg-none! [&>[data-slot=card]]:shadow-none! [&>[data-slot=card]]:backdrop-blur-none!">
+          <div className="[&_[data-slot=card-content]]:p-0! [&_h2]:hidden [&>[data-slot=card]]:rounded-none! [&>[data-slot=card]]:border-0! [&>[data-slot=card]]:bg-none! [&>[data-slot=card]]:shadow-none! [&>[data-slot=card]]:backdrop-blur-none!">
             <ThemeSettings />
           </div>
         </ConfigSection>
@@ -1894,7 +1894,7 @@ export default function ConfigPage() {
       {/* 配置统一保存（公告除外），有修改时出现 */}
       {hasChanges && (
         <div
-          className={`sticky z-20 mt-4 flex items-center gap-3 rounded-xl border border-warning-300 bg-warning-50/95 px-3 py-2 shadow-md backdrop-blur dark:bg-warning-900/60 ${
+          className={`sticky z-20 mt-4 flex items-center gap-3 rounded-lg border border-divider bg-background px-3 py-2 shadow-sm ${
             isH5 ? "bottom-[calc(4.5rem+var(--safe-area-bottom))]" : "bottom-4"
           }`}
         >
@@ -1916,7 +1916,7 @@ export default function ConfigPage() {
       <Modal
         backdrop="blur"
         classNames={{
-          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
         }}
         isOpen={exportSelectorOpen}
         onOpenChange={setExportSelectorOpen}
@@ -1948,7 +1948,7 @@ export default function ConfigPage() {
       <Modal
         backdrop="blur"
         classNames={{
-          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
         }}
         isOpen={importSelectorOpen}
         onOpenChange={setImportSelectorOpen}
@@ -1980,7 +1980,7 @@ export default function ConfigPage() {
       <Modal
         backdrop="blur"
         classNames={{
-          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden",
+          base: "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden",
         }}
         isOpen={systemUpgradeModalOpen}
         onOpenChange={(open) => {

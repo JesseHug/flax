@@ -428,7 +428,7 @@ export default function RelayPage() {
   };
 
   return (
-    <AnimatedPage className="px-3 py-6 lg:px-6">
+    <AnimatedPage className="px-4 py-6 lg:px-10 lg:py-8">
       <PageHeader
         description="让客户端先连中转再到节点：线路按节点管理，隧道和规则是底层的转发配置"
         title="中转"

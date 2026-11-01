@@ -45,18 +45,22 @@ export function PageHeader({
   secondary?: PageAction;
 }) {
   return (
-    <div className="mb-4 flex items-start justify-between gap-3">
+    <div className="mb-6 flex items-center justify-between gap-3">
       <div className="min-w-0">
-        <h1 className="text-lg font-semibold">{title}</h1>
-        {description && (
-          <p className="mt-0.5 text-xs text-default-500">{description}</p>
-        )}
+        {/* The help line stays as a tooltip: the page itself shows only
+            its title. */}
+        <h1
+          className="text-xl font-semibold tracking-tight"
+          title={typeof description === "string" ? description : undefined}
+        >
+          {title}
+        </h1>
       </div>
       {(primary || secondary) && (
         <div className="flex shrink-0 gap-2">
           {secondary && (
             <Button
-              className="gap-1.5 border-default-300 text-foreground dark:text-foreground"
+              className="gap-1.5 text-foreground dark:text-foreground"
               isDisabled={secondary.disabled}
               size="sm"
               startContent={secondary.icon}
@@ -99,18 +103,17 @@ export function PageTabs<T extends string>({
 }) {
   return (
     <div
-      className="mb-4 grid gap-1 rounded-full bg-default-100 p-1 sm:max-w-md"
+      className="mb-4 flex gap-5 overflow-x-auto border-b border-divider scrollbar-hide"
       role="tablist"
-      style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
     >
       {tabs.map((t) => (
         <button
           key={t.key}
           aria-selected={value === t.key}
-          className={`flex min-w-0 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors ${
+          className={`-mb-px flex shrink-0 items-center gap-1.5 border-b-[1.5px] py-2 text-sm transition-colors ${
             value === t.key
-              ? "bg-background font-medium text-foreground shadow-sm"
-              : "text-default-500 hover:text-default-700"
+              ? "border-foreground font-medium text-foreground"
+              : "border-transparent text-default-500 hover:text-foreground"
           }`}
           role="tab"
           type="button"
@@ -118,13 +121,7 @@ export function PageTabs<T extends string>({
         >
           <span className="truncate">{t.label}</span>
           {t.badge !== undefined && t.badge !== null && (
-            <span
-              className={`shrink-0 rounded-full px-1.5 text-[11px] leading-4 ${
-                value === t.key
-                  ? "bg-primary/10 text-primary"
-                  : "bg-default-200 text-default-500"
-              }`}
-            >
+            <span className="shrink-0 text-xs font-normal tabular-nums text-default-400">
               {t.badge}
             </span>
           )}
@@ -161,12 +158,12 @@ export function PageToolbar({
   const actions = (more ?? []).filter(Boolean);
 
   return (
-    <div className="mb-3 flex flex-wrap items-center gap-2 sm:flex-nowrap">
+    <div className="mb-2 flex flex-wrap items-center gap-2 sm:flex-nowrap">
       {onSearch && (
         // With a main action too, the search gets a row of its own on a
         // phone instead of shrinking to its icon.
         <label
-          className={`flex h-9 min-w-0 flex-1 items-center gap-2 rounded-full bg-default-100 px-3.5 sm:max-w-xs ${primary ? "basis-full sm:basis-auto" : ""}`}
+          className={`flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md border border-divider px-2.5 transition-colors focus-within:border-default-400 sm:max-w-xs ${primary ? "basis-full sm:basis-auto" : ""}`}
         >
           <Search className="h-4 w-4 shrink-0 text-default-400" />
           <input
@@ -197,7 +194,7 @@ export function PageToolbar({
             <DropdownTrigger>
               <button
                 aria-label="更多操作"
-                className="flex h-9 items-center gap-1 rounded-full bg-default-100 px-3 text-sm text-default-600 transition-colors hover:bg-default-200"
+                className="flex h-8 items-center gap-1 rounded-md px-2 text-sm text-default-500 transition-colors hover:bg-default-100 hover:text-foreground"
                 type="button"
               >
                 <MoreHorizontal className="h-4 w-4" />
@@ -220,7 +217,7 @@ export function PageToolbar({
         )}
         {primary && (
           <Button
-            className="shrink-0 rounded-full"
+            className="shrink-0"
             color="primary"
             isDisabled={primary.disabled}
             size="sm"
@@ -246,10 +243,10 @@ export function ToolbarButton({
 }) {
   return (
     <button
-      className={`flex h-9 shrink-0 items-center gap-1 rounded-full px-3.5 text-sm transition-colors ${
+      className={`flex h-8 shrink-0 items-center gap-1 rounded-md px-2.5 text-sm transition-colors ${
         active
-          ? "bg-primary/10 font-medium text-primary"
-          : "bg-default-100 text-default-600 hover:bg-default-200"
+          ? "bg-default-100 font-medium text-foreground"
+          : "text-default-500 hover:bg-default-100 hover:text-foreground"
       }`}
       type="button"
       onClick={onPress}
@@ -274,7 +271,7 @@ export function SelectionBar({
   onExit: () => void;
 }) {
   return (
-    <div className="sticky top-0 z-10 mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-divider bg-background/95 px-3 py-2 shadow-sm backdrop-blur">
+    <div className="sticky top-0 z-10 mb-2 flex flex-wrap items-center gap-2 border-b border-divider bg-background py-2">
       <span className="text-sm text-default-600">已选 {count} 个</span>
       <div className="ml-auto flex flex-wrap justify-end gap-2">
         <Button size="sm" variant="flat" onPress={onToggleAll}>
@@ -342,10 +339,8 @@ export function ListRow({
   return (
     <div
       aria-pressed={selectMode ? selected : undefined}
-      className={`flex w-full cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 text-left shadow-sm transition-colors ${
-        selected
-          ? "border-primary bg-primary-50/70 dark:bg-primary-900/40"
-          : "border-divider bg-content1 hover:bg-default-100"
+      className={`group flex w-full cursor-pointer items-center gap-3 border-b border-divider px-2 py-3 text-left transition-colors ${
+        selected ? "bg-default-100" : "hover:bg-default-50"
       }`}
       role="button"
       tabIndex={0}
@@ -369,19 +364,19 @@ export function ListRow({
       )}
       {status && (
         <span
-          className={`h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[status]}`}
+          className={`h-1.5 w-1.5 shrink-0 rounded-full ${STATUS_DOT[status]}`}
           title={statusTitle}
         />
       )}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <span className="truncate font-medium">{title}</span>
+          <span className="truncate">{title}</span>
           {badges}
         </div>
         {meta && (
-          <div className="truncate text-xs text-default-500">{meta}</div>
+          <div className="truncate text-xs text-default-400">{meta}</div>
         )}
-        {footer && <div className="mt-1.5">{footer}</div>}
+        {footer && <div className="mt-1.5 empty:hidden">{footer}</div>}
       </div>
       {right && !selectMode && (
         <div
@@ -406,9 +401,9 @@ export function ListGroup({
   children: React.ReactNode;
 }) {
   return (
-    <section className="space-y-2">
+    <section>
       {title && (
-        <h2 className="flex items-baseline gap-2 px-1 text-sm font-semibold">
+        <h2 className="flex items-baseline gap-2 border-b border-divider px-2 pb-1.5 pt-5 text-xs font-medium text-default-500">
           {title}
           {count !== undefined && (
             <span className="text-xs font-normal text-default-400">
@@ -417,7 +412,7 @@ export function ListGroup({
           )}
         </h2>
       )}
-      <div className="grid grid-cols-1 gap-2 2xl:grid-cols-2">{children}</div>
+      <div className="flex flex-col">{children}</div>
     </section>
   );
 }
@@ -430,15 +425,10 @@ export function EmptyHint({
   action?: PageAction;
 }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-divider px-4 py-8 text-center text-sm text-default-500">
+    <div className="flex flex-col items-center gap-3 px-4 py-12 text-center text-sm text-default-400">
       <p>{text}</p>
       {action && (
-        <Button
-          color="primary"
-          size="sm"
-          variant="flat"
-          onPress={action.onPress}
-        >
+        <Button color="primary" size="sm" onPress={action.onPress}>
           {action.label}
         </Button>
       )}
@@ -475,6 +465,8 @@ export function PageShell({
   return embedded ? (
     <div>{children}</div>
   ) : (
-    <AnimatedPage className="px-3 lg:px-6 py-6">{children}</AnimatedPage>
+    <AnimatedPage className="px-4 py-6 lg:px-10 lg:py-8">
+      {children}
+    </AnimatedPage>
   );
 }
