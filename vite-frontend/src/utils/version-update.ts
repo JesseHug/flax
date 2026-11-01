@@ -82,8 +82,12 @@ type VersionParts = {
 
 const parseVersionParts = (version: string): VersionParts => {
   const normalized = normalizeTag(version).toLowerCase();
-  const numberMatches = normalized.match(/\d+/g) || [];
-  const numbers = numberMatches.map((item) => Number.parseInt(item, 10));
+  // Only the leading x.y.z is the version: the 1 in "rc.1" is the stage's
+  // number, not a fourth version part. Matches the backend's comparison.
+  const core = normalized.match(/^\d+(?:\.\d+)*/)?.[0] ?? "";
+  const numbers = core
+    ? core.split(".").map((item) => Number.parseInt(item, 10))
+    : [];
 
   let stageRank = 0;
 
@@ -156,6 +160,14 @@ export const getLatestVersionByChannel = async (
   channel: UpdateReleaseChannel,
   repoUrl: string,
 ): Promise<string | null> => {
+  // The online demo has no backend: use the version it was recorded with,
+  // as its settings page does. The check is inline so other builds drop it.
+  if (import.meta.env.VITE_DEMO === "true") {
+    const { demoLatestVersion } = await import("@/demo");
+
+    return demoLatestVersion();
+  }
+
   const normalizedChannel = normalizeChannel(channel);
   const now = Date.now();
   const cached = latestVersionCache[normalizedChannel];

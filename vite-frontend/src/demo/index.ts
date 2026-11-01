@@ -133,6 +133,21 @@ const loadFixtures = async (): Promise<Fixtures> =>
   import.meta.env.VITE_DEMO === "true"
     ? ((await import("./fixtures.json")).default as Fixtures)
     : { recordedAt: 0, admin: {}, user: {} };
+
+/**
+ * The latest release as the recording saw it. The demo's update hint reads
+ * this instead of asking GitHub, so it matches the settings page (which
+ * also answers from the recording).
+ */
+export async function demoLatestVersion(): Promise<string | null> {
+  fixtures ??= await loadFixtures();
+  const data = fixtures.admin["system/version"]?.[0]?.res.data as
+    | { latestVersion?: string }
+    | undefined;
+
+  return data?.latestVersion || null;
+}
+
 let lastNotice = 0;
 
 async function answer(config: InternalAxiosRequestConfig) {

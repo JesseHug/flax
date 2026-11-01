@@ -453,17 +453,8 @@ func (h *Handler) resolveSystemUpgradeLatestReleaseByChannel(channel string) (st
 		return "", err
 	}
 
-	for _, r := range releases {
-		if r.Draft {
-			continue
-		}
-		tag := strings.TrimSpace(r.TagName)
-		if tag == "" {
-			continue
-		}
-		if releaseChannelFromTag(tag) == normalizedChannel {
-			return tag, nil
-		}
+	if tag, ok := latestReleaseTag(releases, normalizedChannel); ok {
+		return tag, nil
 	}
 
 	return "", fmt.Errorf("未找到%s版本号", releaseChannelLabel(normalizedChannel))
@@ -566,6 +557,7 @@ func releasesForChannel(releases []githubRelease, channel string) []systemUpgrad
 			Channel:     itemChannel,
 		})
 	}
+	sortReleasesNewestFirst(items)
 	return items
 }
 
@@ -587,7 +579,7 @@ func systemUpgradeVersionResponse(current, channel, latest string, lookupErr err
 	data := systemUpgradeVersionData{
 		CurrentVersion: current,
 		LatestVersion:  latest,
-		HasUpdate:      latest != "" && latest != current,
+		HasUpdate:      releaseIsNewer(current, latest),
 		Channel:        channel,
 		Capability:     capability,
 	}
@@ -643,7 +635,7 @@ func (h *Handler) systemCheckUpdates(w http.ResponseWriter, r *http.Request) {
 	response.WriteJSON(w, response.OK(systemUpgradeCheckData{
 		CurrentVersion: current,
 		LatestVersion:  latest,
-		HasUpdate:      latest != "" && latest != current,
+		HasUpdate:      releaseIsNewer(current, latest),
 		Channel:        channel,
 		Capability:     capability,
 		Releases:       releases,

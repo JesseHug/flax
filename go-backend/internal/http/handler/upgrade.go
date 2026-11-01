@@ -231,17 +231,8 @@ func resolveLatestReleaseByChannel(channel string) (string, error) {
 		return "", err
 	}
 
-	for _, r := range releases {
-		if r.Draft {
-			continue
-		}
-		tag := strings.TrimSpace(r.TagName)
-		if tag == "" {
-			continue
-		}
-		if releaseChannelFromTag(tag) == normalizedChannel {
-			return tag, nil
-		}
+	if tag, ok := latestReleaseTag(releases, normalizedChannel); ok {
+		return tag, nil
 	}
 
 	return "", fmt.Errorf("未找到%s版本号", releaseChannelLabel(normalizedChannel))
