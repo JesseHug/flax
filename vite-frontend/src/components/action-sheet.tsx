@@ -1,4 +1,3 @@
-import { Button } from "@/shadcn-bridge/heroui/button";
 import {
   Modal,
   ModalBody,
@@ -6,12 +5,12 @@ import {
   ModalHeader,
 } from "@/shadcn-bridge/heroui/modal";
 
-const modalBase =
-  "!w-[calc(100%-32px)] !mx-auto sm:!w-full rounded-2xl overflow-hidden";
+const modalBase = "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden";
 
 export interface SheetAction {
   key: string;
   label: string;
+  /** Only "danger" changes how the action looks (red, listed last). */
   color?: "primary" | "secondary" | "success" | "warning" | "danger";
   disabled?: boolean;
   onPress: () => void;
@@ -33,9 +32,14 @@ export function ActionSheet({
   actions: SheetAction[];
   onClose: () => void;
 }) {
+  // Destructive actions go last so they are not hit by accident.
+  const ordered = [
+    ...actions.filter((a) => a.color !== "danger"),
+    ...actions.filter((a) => a.color === "danger"),
+  ];
+
   return (
     <Modal
-      backdrop="blur"
       classNames={{ base: modalBase }}
       isOpen={isOpen}
       placement="center"
@@ -43,31 +47,37 @@ export function ActionSheet({
       onOpenChange={(open) => !open && onClose()}
     >
       <ModalContent>
-        <ModalHeader className="flex flex-col gap-1">
-          <h2 className="text-lg font-bold break-all">{title}</h2>
+        <ModalHeader className="flex flex-col gap-0.5">
+          <h2 className="break-all text-base font-semibold">{title}</h2>
           {subtitle && (
-            <div className="text-small font-normal text-default-500">
+            <div className="text-xs font-normal text-default-400">
               {subtitle}
             </div>
           )}
         </ModalHeader>
-        <ModalBody className="pb-6">
+        <ModalBody className="pb-0">
           {children}
-          <div className="grid grid-cols-3 gap-2">
-            {actions.map((a) => (
-              <Button
+          <div
+            className={`grid gap-2 border-t border-divider pt-4 ${
+              // Four or fewer fit on one row even on a phone.
+              ordered.length <= 4 ? "grid-cols-4" : "grid-cols-3 sm:grid-cols-4"
+            }`}
+          >
+            {ordered.map((a) => (
+              <button
                 key={a.key}
-                className="w-full min-w-0 px-1"
-                color={a.color}
-                isDisabled={a.disabled}
-                variant="flat"
-                onPress={() => {
+                className={`h-9 min-w-0 whitespace-nowrap rounded-md border border-divider px-1 text-sm transition-colors hover:border-default-400 hover:bg-default-50 disabled:pointer-events-none disabled:opacity-40 ${
+                  a.color === "danger" ? "text-danger" : "text-foreground"
+                }`}
+                disabled={a.disabled}
+                type="button"
+                onClick={() => {
                   onClose();
                   a.onPress();
                 }}
               >
                 {a.label}
-              </Button>
+              </button>
             ))}
           </div>
         </ModalBody>
