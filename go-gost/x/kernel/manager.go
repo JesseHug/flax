@@ -37,6 +37,8 @@ type Manager struct {
 	restoreOnce sync.Once
 	instances   map[string]*instance
 	nft         *nftCounters
+	// lastNftErr is the last nftables sync failure logged (guarded by mu).
+	lastNftErr string
 }
 
 var (
@@ -144,12 +146,21 @@ func (m *Manager) allUserMarks() []int64 {
 func (m *Manager) syncNft() error {
 	err := m.nft.sync(m.allPorts(), m.allUserMarks())
 	if err == nil {
+		m.mu.Lock()
+		m.lastNftErr = ""
+		m.mu.Unlock()
 		return nil
 	}
 	m.mu.Lock()
+	// The same failure repeats on every apply (e.g. no permission in a
+	// container); log it once per kernel instead of on every change.
+	logIt := err.Error() != m.lastNftErr
+	m.lastNftErr = err.Error()
 	var guarded []*instance
 	for _, inst := range m.instances {
-		inst.logs.add("[flyx] nftables 规则同步失败: " + err.Error())
+		if logIt {
+			inst.logs.add("[flyx] nftables 规则同步失败: " + err.Error())
+		}
 		if !inst.req.Enabled {
 			continue
 		}
@@ -172,15 +183,28 @@ func (m *Manager) syncNft() error {
 	return err
 }
 
-// ensureBinary installs a binary into dir unless it is already there.
+// ensureBinary installs a binary into dir unless a runnable copy is already
+// there. A copy that cannot run here (wrong CPU, missing dynamic loader) is
+// removed and installed again, so a bad download does not stick forever.
 func (m *Manager) ensureBinary(inst *instance, label string, d *Download, dir string) (string, error) {
 	path := filepath.Join(dir, d.BinName)
 	if _, err := os.Stat(path); err == nil {
-		return path, nil
+		bad := checkRunnable(path)
+		if bad == nil {
+			return path, nil
+		}
+		inst.logs.add(fmt.Sprintf("[flyx] 已安装的 %s 无法在本机运行（%v），重新安装", label, bad))
+		if err := os.RemoveAll(dir); err != nil {
+			return "", fmt.Errorf("删除无法运行的 %s 失败: %v", label, err)
+		}
 	}
 	inst.logs.add(fmt.Sprintf("[flyx] 安装 %s", label))
 	if err := install(d, dir); err != nil {
 		return "", fmt.Errorf("安装 %s 失败: %v", label, err)
+	}
+	if bad := checkRunnable(path); bad != nil {
+		_ = os.RemoveAll(dir)
+		return "", fmt.Errorf("安装的 %s 无法在本机运行: %v", label, bad)
 	}
 	inst.logs.add(fmt.Sprintf("[flyx] %s 安装完成", label))
 	return path, nil
@@ -513,7 +537,11 @@ func (m *Manager) Status(logsFor string) Status {
 		out.Kernels = append(out.Kernels, m.state(t, t == logsFor))
 	}
 	if len(m.allPorts()) == 0 {
-		out.NftAvailable = nftAvailable() == nil
+		if err := nftAvailable(); err != nil {
+			out.NftError = nftUnavailableText(err)
+		} else {
+			out.NftAvailable = true
+		}
 		return out
 	}
 	counters, users, epoch, err := m.nft.read()
