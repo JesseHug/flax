@@ -43,6 +43,10 @@ export interface Tunnel {
   inNodePortEnd?: number;
   portRangeMin?: number;
   portRangeMax?: number;
+  /** Listen IP choices, from the user tunnel list (normal users). */
+  inIps?: string[];
+  /** Number of entry servers, from the user tunnel list (normal users). */
+  inNodeNum?: number;
 }
 
 export interface Node {

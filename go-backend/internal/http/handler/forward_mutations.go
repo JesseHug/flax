@@ -105,6 +105,12 @@ func (h *Handler) forwardCreate(w http.ResponseWriter, r *http.Request) {
 		response.WriteJSON(w, response.ErrDefault("多入口隧道的转发不支持自定义监听IP"))
 		return
 	}
+	if inIp != "" && roleID != 0 {
+		if err := h.validateUserListenIP(tunnelID, inIp, nil); err != nil {
+			response.WriteJSON(w, response.ErrDefault(err.Error()))
+			return
+		}
+	}
 	for _, nodeID := range entryNodes {
 		node, nodeErr := h.getNodeRecord(nodeID)
 		if nodeErr != nil {
@@ -290,6 +296,12 @@ func (h *Handler) forwardUpdate(w http.ResponseWriter, r *http.Request) {
 	if hasInIP && strings.TrimSpace(inIp) != "" && len(fwdEntryNodes) > 1 {
 		response.WriteJSON(w, response.ErrDefault("多入口隧道的转发不支持自定义监听IP"))
 		return
+	}
+	if hasInIP && strings.TrimSpace(inIp) != "" && actorRole != 0 {
+		if err := h.validateUserListenIP(tunnelID, inIp, oldPorts); err != nil {
+			response.WriteJSON(w, response.ErrDefault(err.Error()))
+			return
+		}
 	}
 	// When switching tunnels, entry nodes / service base may change. We must clean up old
 	// listeners on nodes that will be removed, otherwise the old ports keep listening.
@@ -1048,4 +1060,27 @@ func (h *Handler) validateForwardPortAvailability(node *nodeRecord, port int, cu
 		return fmt.Errorf("服务器 %s 端口 %d 已被其他转发占用", node.Name, port)
 	}
 	return nil
+}
+
+// validateUserListenIP lets a normal user pick only a listen IP the tunnel's
+// entry server has (what the forward form offers), so a forward cannot be
+// set to an address no server can bind. The forward's current listen IP,
+// which an admin may have set, is kept as is.
+func (h *Handler) validateUserListenIP(tunnelID int64, inIp string, current []forwardPortRecord) error {
+	inIp = strings.TrimSpace(inIp)
+	for _, fp := range current {
+		if strings.TrimSpace(fp.InIP) == inIp {
+			return nil
+		}
+	}
+	opts, err := h.repo.TunnelListenOptions([]int64{tunnelID})
+	if err != nil {
+		return err
+	}
+	for _, ip := range opts[tunnelID].IPs {
+		if ip == inIp {
+			return nil
+		}
+	}
+	return fmt.Errorf("监听 IP %s 不是该隧道入口服务器的地址", inIp)
 }

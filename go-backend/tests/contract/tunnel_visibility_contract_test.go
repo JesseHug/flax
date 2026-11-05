@@ -108,6 +108,16 @@ func TestUserTunnelVisibleListContracts(t *testing.T) {
 		if !ids[enabledA] || !ids[enabledB] {
 			t.Fatalf("expected enabled assigned tunnels for user, got %v", ids)
 		}
+		// The listen IP choices of the forward form (issue #208).
+		for _, item := range out.Data.([]interface{}) {
+			obj := item.(map[string]interface{})
+			if _, ok := obj["inIps"].([]interface{}); !ok {
+				t.Fatalf("expected inIps list in user tunnel item: %v", obj)
+			}
+			if _, ok := obj["inNodeNum"].(float64); !ok {
+				t.Fatalf("expected inNodeNum in user tunnel item: %v", obj)
+			}
+		}
 		if ids[disabledC] {
 			t.Fatalf("did not expect disabled tunnel for user")
 		}

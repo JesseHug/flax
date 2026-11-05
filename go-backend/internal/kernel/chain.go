@@ -26,7 +26,7 @@ func (in Inbound) chainBlocked() bool { return in.Via != nil && in.Via.Host == "
 
 // countedUsers returns the inbound's users whose traffic carries a mark.
 func (in Inbound) countedUsers() []int64 {
-	if !in.SupportsUsers() {
+	if !in.SupportsUsers() || in.noUserMarks {
 		return nil
 	}
 	var ids []int64

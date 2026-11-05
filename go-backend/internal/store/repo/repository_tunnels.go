@@ -34,6 +34,10 @@ func (r *Repository) ListUserAccessibleTunnels(userID int64) ([]map[string]inter
 		tunnelIDs = append(tunnelIDs, rw.ID)
 	}
 	portRangeMap := r.getTunnelEntryPortRanges(tunnelIDs)
+	listen, err := r.TunnelListenOptions(tunnelIDs)
+	if err != nil {
+		return nil, err
+	}
 
 	items := make([]map[string]interface{}, 0, len(rows))
 	for _, rw := range rows {
@@ -42,9 +46,105 @@ func (r *Repository) ListUserAccessibleTunnels(userID int64) ([]map[string]inter
 			item["portRangeMin"] = pr.min
 			item["portRangeMax"] = pr.max
 		}
+		// Normal users cannot read the tunnel and server lists the admin
+		// form builds the 监听 IP choices from.
+		opt := listen[rw.ID]
+		item["inNodeNum"] = opt.EntryCount
+		item["inIps"] = opt.IPs
 		items = append(items, item)
 	}
 	return items, nil
+}
+
+// TunnelListenOption is what a forward on a tunnel may listen on: the
+// addresses of its entry servers (or the tunnel's own entry address when they
+// have none), as the admin forward form offers them.
+type TunnelListenOption struct {
+	EntryCount int
+	IPs        []string
+}
+
+// TunnelListenOptions returns the listen choices of the given tunnels.
+func (r *Repository) TunnelListenOptions(tunnelIDs []int64) (map[int64]TunnelListenOption, error) {
+	if r == nil || r.db == nil {
+		return nil, errors.New("repository not initialized")
+	}
+	out := make(map[int64]TunnelListenOption, len(tunnelIDs))
+	if len(tunnelIDs) == 0 {
+		return out, nil
+	}
+	type entry struct {
+		TunnelID int64
+		NodeID   int64
+	}
+	var entries []entry
+	if err := r.db.Model(&model.ChainTunnel{}).Select("tunnel_id, node_id").
+		Where("tunnel_id IN ? AND chain_type = ?", tunnelIDs, "1").
+		Order("inx ASC, id ASC").Find(&entries).Error; err != nil {
+		return nil, err
+	}
+	nodeIDs := make([]int64, 0, len(entries))
+	for _, e := range entries {
+		nodeIDs = append(nodeIDs, e.NodeID)
+	}
+	nodes := map[int64]model.Node{}
+	if len(nodeIDs) > 0 {
+		var rows []model.Node
+		if err := r.db.Select("id, server_ip, server_ip_v4, server_ip_v6, extra_ips").
+			Where("id IN ?", nodeIDs).Find(&rows).Error; err != nil {
+			return nil, err
+		}
+		for _, n := range rows {
+			nodes[n.ID] = n
+		}
+	}
+	type tunnelRow struct {
+		ID   int64
+		InIP *string
+	}
+	var tunnels []tunnelRow
+	if err := r.db.Model(&model.Tunnel{}).Select("id, in_ip").Where("id IN ?", tunnelIDs).Find(&tunnels).Error; err != nil {
+		return nil, err
+	}
+	tunnelInIP := map[int64]string{}
+	for _, t := range tunnels {
+		if t.InIP != nil {
+			tunnelInIP[t.ID] = *t.InIP
+		}
+	}
+
+	collect := func(dst *[]string, seen map[string]bool, values ...string) {
+		for _, v := range values {
+			for _, part := range strings.Split(v, ",") {
+				if p := strings.TrimSpace(part); p != "" && !seen[p] {
+					seen[p] = true
+					*dst = append(*dst, p)
+				}
+			}
+		}
+	}
+	seen := map[int64]map[string]bool{}
+	for _, id := range tunnelIDs {
+		out[id] = TunnelListenOption{IPs: []string{}}
+		seen[id] = map[string]bool{}
+	}
+	for _, e := range entries {
+		opt := out[e.TunnelID]
+		opt.EntryCount++
+		if n, ok := nodes[e.NodeID]; ok {
+			collect(&opt.IPs, seen[e.TunnelID], n.ServerIPV4.String, n.ServerIPV6.String, n.ServerIP, n.ExtraIPs.String)
+		}
+		out[e.TunnelID] = opt
+	}
+	// Only when the entry servers have no address: the tunnel's own entry
+	// address may be a NAT public address or a domain no server can bind.
+	for id, opt := range out {
+		if len(opt.IPs) == 0 {
+			collect(&opt.IPs, seen[id], tunnelInIP[id])
+			out[id] = opt
+		}
+	}
+	return out, nil
 }
 
 func (r *Repository) ListEnabledTunnelSummaries() ([]map[string]interface{}, error) {

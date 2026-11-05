@@ -159,7 +159,7 @@ func markedUsers(inbounds []Inbound) []int64 {
 	seen := map[int64]bool{}
 	var ids []int64
 	for _, in := range inbounds {
-		if !in.SupportsUsers() {
+		if !in.SupportsUsers() || in.noUserMarks {
 			continue
 		}
 		for _, u := range in.Users {

@@ -15,8 +15,11 @@ func TestSetNodeNftError(t *testing.T) {
 	id := seedRelayTargetNode(t, r, "lxc", "198.51.100.7")
 
 	msg := "本机没有 nftables 权限（常见于 LXC、OpenVZ 等容器）"
-	if err := r.SetNodeNftError(id, msg); err != nil {
-		t.Fatal(err)
+	if changed, err := r.SetNodeNftError(id, msg); err != nil || !changed {
+		t.Fatalf("first report must change the node: %v %v", changed, err)
+	}
+	if changed, _ := r.SetNodeNftError(id, msg); changed {
+		t.Fatal("the same report must not count as a change")
 	}
 	node, _ := r.GetNodeByID(id)
 	if node == nil || node.NftError != msg {
@@ -26,7 +29,7 @@ func TestSetNodeNftError(t *testing.T) {
 	if err != nil || len(items) != 1 || items[0]["nftError"] != msg {
 		t.Fatalf("node list must expose nftError: %v %v", items, err)
 	}
-	if err := r.SetNodeNftError(id, ""); err != nil {
+	if _, err := r.SetNodeNftError(id, ""); err != nil {
 		t.Fatal(err)
 	}
 	if node, _ = r.GetNodeByID(id); node.NftError != "" {
@@ -73,5 +76,23 @@ func TestInactiveRelays(t *testing.T) {
 	// Inbounds outside the subscription are not reported.
 	if got := h.inactiveRelays(&subContext{rows: rows}, inbounds[:1]); len(got) != 0 {
 		t.Fatalf("relays of other inbounds reported: %+v", got)
+	}
+}
+
+func TestNftCannotMark(t *testing.T) {
+	for msg, want := range map[string]bool{
+		// 3.5.5+ agents
+		"本机没有 nftables 权限（常见于 LXC、OpenVZ 等容器），无法使用流量统计、入站白名单和端口跳跃": true,
+		// older agents pass nft's own error through
+		"nft: Operation not permitted (you must be root)\nnetlink: Error: cache initialization failed: Operation not permitted": true,
+		"nft: Permission denied": true,
+		// nft missing says nothing about socket marks
+		"未安装 nftables，无法统计流量":            false,
+		"nft: context deadline exceeded": false,
+		"":                               false,
+	} {
+		if got := nftCannotMark(msg); got != want {
+			t.Errorf("nftCannotMark(%q) = %v, want %v", msg, got, want)
+		}
 	}
 }

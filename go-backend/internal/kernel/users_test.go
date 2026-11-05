@@ -99,3 +99,42 @@ func TestRenderUserMarks(t *testing.T) {
 		t.Fatal("mark round trip")
 	}
 }
+
+// On servers that may not set socket marks (LXC/OpenVZ without
+// CAP_NET_ADMIN) every marked dial fails with "operation not permitted", so
+// subscription users could connect but reach nothing. With NoUserMarks they
+// keep their credentials and leave through the default outbounds.
+func TestRenderNoUserMarks(t *testing.T) {
+	via := Endpoint{Host: "1.2.3.4", Port: 443, Direct: true, Proxy: Proxy{
+		"type": "trojan", "server": "1.2.3.4", "port": 443, "password": "tpw", "sni": "t.example.com"}}
+	plain := Inbound{ID: 1, Protocol: ProtocolVLESS, Port: 443,
+		Settings: Settings{UUID: "00000000-0000-4000-8000-000000000000"}, Users: chainUser}
+	chained := Inbound{ID: 2, Protocol: ProtocolVLESS, Port: 444, Security: Security{Type: SecurityNone},
+		Settings: Settings{UUID: "00000000-0000-4000-8000-000000000001"}, Users: chainUser, Via: &via}
+	hy2 := Inbound{ID: 3, Protocol: ProtocolHysteria2, Port: 8443, Settings: Settings{Password: "hp"},
+		Security: Security{Type: SecurityTLS, SNI: "h.example.com", CertPEM: "c", KeyPEM: "k"}, Users: chainUser}
+
+	for _, kt := range []string{TypeXray, TypeSingbox} {
+		ins := []Inbound{plain, chained}
+		if kt == TypeSingbox {
+			ins = append(ins, hy2)
+		}
+		r, err := RenderWith(kt, ins, RenderOptions{NoUserMarks: true})
+		if err != nil {
+			t.Fatalf("%s: %v", kt, err)
+		}
+		cfg := r.Files[0].Content
+		if len(r.UserMarks) != 0 || strings.Contains(cfg, "routing_mark") || strings.Contains(cfg, `"mark"`) ||
+			strings.Contains(cfg, "flyx-u7") || strings.Contains(cfg, "-u7\"") {
+			t.Fatalf("%s must not mark users (%v):\n%s", kt, r.UserMarks, cfg)
+		}
+		// The user's own credentials still work.
+		if !strings.Contains(cfg, "11111111-1111-4111-8111-111111111111") {
+			t.Fatalf("%s dropped the user's credentials:\n%s", kt, cfg)
+		}
+		marked, err := RenderWith(kt, ins, RenderOptions{})
+		if err != nil || len(marked.UserMarks) != 1 || marked.Hash == r.Hash {
+			t.Fatalf("%s: marks must still apply by default (%v %v)", kt, marked.UserMarks, err)
+		}
+	}
+}

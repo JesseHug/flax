@@ -427,8 +427,23 @@ export default function ForwardPage({
       map.set(tunnel.id, Array.from(new Set(collected)));
     }
 
+    // Normal users cannot read the admin tunnel and server lists; their
+    // tunnel list carries the choices instead.
+    for (const tunnel of tunnels) {
+      if (!map.has(tunnel.id) && tunnel.inIps) {
+        map.set(tunnel.id, Array.from(new Set(tunnel.inIps)));
+      }
+    }
+
     return map;
-  }, [allTunnels, nodes]);
+  }, [allTunnels, tunnels, nodes]);
+
+  const findFormTunnel = useCallback(
+    (id: number) =>
+      allTunnels.find((tunnel) => tunnel.id === id) ??
+      tunnels.find((tunnel) => tunnel.id === id),
+    [allTunnels, tunnels],
+  );
 
   const currentTunnelIpOptions = useMemo(() => {
     if (!form.tunnelId) {
@@ -443,21 +458,19 @@ export default function ForwardPage({
       return false;
     }
 
-    const currentTunnel = allTunnels.find(
-      (tunnel) => tunnel.id === form.tunnelId,
-    );
+    const currentTunnel = findFormTunnel(form.tunnelId);
+    const entries =
+      currentTunnel?.inNodeId?.length ?? currentTunnel?.inNodeNum ?? 0;
 
-    return (currentTunnel?.inNodeId?.length || 0) > 1;
-  }, [allTunnels, form.tunnelId]);
+    return entries > 1;
+  }, [findFormTunnel, form.tunnelId]);
 
   const currentTunnelPortRange = useMemo(() => {
     if (!form.tunnelId) {
       return null;
     }
 
-    const currentTunnel = allTunnels.find(
-      (tunnel) => tunnel.id === form.tunnelId,
-    );
+    const currentTunnel = findFormTunnel(form.tunnelId);
 
     if (
       currentTunnel?.portRangeMin &&
@@ -472,7 +485,7 @@ export default function ForwardPage({
     }
 
     return null;
-  }, [allTunnels, form.tunnelId]);
+  }, [findFormTunnel, form.tunnelId]);
 
   useEffect(() => {
     return () => {

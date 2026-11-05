@@ -55,6 +55,11 @@ type RenderOptions struct {
 	// SingboxPreferGoDNS bypasses systemd-resolved DBus in local DNS
 	// resolvers; supported by sing-box 1.13+.
 	SingboxPreferGoDNS bool
+	// NoUserMarks: the server may not set socket marks (no CAP_NET_ADMIN,
+	// e.g. LXC/OpenVZ containers), where every marked dial fails with
+	// "operation not permitted". Users then share the default outbounds and
+	// their traffic is not counted per user (which needs nftables anyway).
+	NoUserMarks bool
 }
 
 // Render produces the kernel configuration for the given enabled inbounds.
@@ -68,6 +73,11 @@ func RenderWith(kernelType string, inbounds []Inbound, opts RenderOptions) (Rend
 	sorted := make([]Inbound, len(inbounds))
 	copy(sorted, inbounds)
 	sort.Slice(sorted, func(i, j int) bool { return sorted[i].ID < sorted[j].ID })
+	if opts.NoUserMarks {
+		for i := range sorted {
+			sorted[i].noUserMarks = true
+		}
+	}
 	for _, in := range sorted {
 		if err := ValidateOutboundIPExtra(kernelType, in.OutboundIPStrategy, in.Extra); err != nil {
 			return Rendered{}, err

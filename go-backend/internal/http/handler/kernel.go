@@ -1290,11 +1290,13 @@ func (h *Handler) buildKernelApplyPayloadWith(k *model.NodeKernel, realmOverride
 	if enabled, proxyURL := h.getGithubProxyConfig(); enabled {
 		proxy = proxyURL
 	}
+	node, _ := h.repo.GetNodeByID(k.NodeID)
 	rendered, err := kernel.RenderWith(k.KernelType, inbounds, kernel.RenderOptions{
 		RuleSetMirror:      proxy,
 		SingboxHTTPClient:  kernelCaps(k.Version).SingboxHTTPClient,
 		SingboxSnell:       kernelCaps(k.Version).SingboxSnell,
 		SingboxPreferGoDNS: kernelCaps(k.Version).SingboxPreferGoDNS,
+		NoUserMarks:        node != nil && nftCannotMark(node.NftError),
 	})
 	if err != nil {
 		return nil, "", err
@@ -1669,8 +1671,28 @@ func (h *Handler) pollNodeKernels(nodeID int64, evenIfNone bool) {
 	if status.NftAvailable {
 		nftErr = ""
 	}
-	if err := h.repo.SetNodeNftError(nodeID, truncate(nftErr, 500)); err != nil {
+	nftChanged, err := h.repo.SetNodeNftError(nodeID, truncate(nftErr, 500))
+	if err != nil {
 		log.Printf("nft status save failed node_id=%d err=%v", nodeID, err)
+	}
+	// Whether users get marked outbounds depends on the node's nftables
+	// permission (nftCannotMark). Re-render when that may have changed the
+	// config, including the first poll after a panel upgrade.
+	reapplied := map[int64]bool{}
+	if nftChanged || nftCannotMark(nftErr) {
+		for _, k := range kernels {
+			if k.AppliedHash != k.ConfigHash || k.ConfigHash == "" {
+				continue // never applied, or a failed apply left for the user
+			}
+			if _, hash, err := h.buildKernelApplyPayload(&k); err == nil && hash != k.ConfigHash {
+				reapplied[k.ID] = true
+				go func(id int64) {
+					if err := h.applyKernel(id, false); err != nil {
+						log.Printf("kernel re-apply after nft change failed kernel_id=%d err=%v", id, err)
+					}
+				}(k.ID)
+			}
+		}
 	}
 
 	now := time.Now().UnixMilli()
@@ -1695,6 +1717,9 @@ func (h *Handler) pollNodeKernels(nodeID int64, evenIfNone bool) {
 		}
 	}
 	for _, k := range kernels {
+		if reapplied[k.ID] {
+			continue
+		}
 		s, ok := byType[k.KernelType]
 		if !ok || s.ConfigHash != k.ConfigHash {
 			// The agent lost a config it had acknowledged (reinstall, state
@@ -1804,4 +1829,18 @@ func (h *Handler) runKernelStatusLoop(ctx context.Context) {
 			h.refreshNodeKernelStatus(nodeID)
 		}
 	}
+}
+
+// nftCannotMark reports whether a node's nftables error (as the agent
+// reported it) means the agent lacks CAP_NET_ADMIN: then it may not set
+// socket marks either, and marked outbounds fail every dial with
+// "operation not permitted".
+func nftCannotMark(nftErr string) bool {
+	msg := strings.ToLower(nftErr)
+	for _, s := range []string{"权限", "operation not permitted", "permission denied", "you must be root"} {
+		if strings.Contains(msg, s) {
+			return true
+		}
+	}
+	return false
 }

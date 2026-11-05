@@ -145,6 +145,9 @@ type Inbound struct {
 	// Split are the inbound's 分流 rules, tried before its default exit;
 	// targets resolved. Filled in when building a kernel config.
 	Split []SplitRule `json:"-"`
+	// noUserMarks is set by RenderWith (RenderOptions.NoUserMarks): no
+	// per-user marked outbounds for this inbound.
+	noUserMarks bool
 }
 
 func (in Inbound) Tag() string {
