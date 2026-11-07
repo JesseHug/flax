@@ -42,6 +42,7 @@ const (
 func ghMirrorRepos() map[string]bool {
 	return map[string]bool{
 		strings.ToLower(githubRepo):    true,
+		"kure29/flyx":                  true,
 		"xtls/xray-core":               true,
 		"sagernet/sing-box":            true,
 		"ihciah/shadow-tls":            true,
