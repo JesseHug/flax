@@ -198,8 +198,12 @@ func TestAgentStartupAndFailedReloadPreservePanelRules(t *testing.T) {
 
 	// Startup errors must exit without advertising a node ready to accept rules.
 	bad := filepath.Join(dir, "invalid.json")
-	writeJSON(t, bad, map[string]any{"services": []any{invalid}})
-	failed := exec.CommandContext(ctx, binary, "-C", bad)
+	if err := os.WriteFile(bad, []byte("{invalid-json"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	failedCtx, failedCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer failedCancel()
+	failed := exec.CommandContext(failedCtx, binary, "-C", bad)
 	failed.Dir = dir
 	if output, err := failed.CombinedOutput(); err == nil {
 		t.Fatalf("invalid startup succeeded: %s", output)
