@@ -9,7 +9,7 @@ import {
   hasVersionUpdate,
 } from "@/utils/version-update";
 
-const FALLBACK_GITHUB_REPO = "https://github.com/kure29/flyx";
+const FALLBACK_GITHUB_REPO = "https://github.com/JesseHug/flux";
 
 interface VersionFooterProps {
   version: string;
@@ -107,7 +107,7 @@ export function VersionFooter({
             rel="noopener noreferrer"
             target="_blank"
           >
-            FLYX
+            FLUX
           </a>
         </p>
       )}

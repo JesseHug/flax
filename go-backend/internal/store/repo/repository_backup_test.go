@@ -300,7 +300,7 @@ func assertConfigValue(t *testing.T, r *Repository, name, want string) {
 }
 
 func TestSeedDataRenamesDefaultAppName(t *testing.T) {
-	for old, want := range map[string]string{"FLVX": "FLYX", "flux": "FLYX", "My Panel": "My Panel"} {
+	for old, want := range map[string]string{"FLVX": "FLUX", "FLYX": "FLUX", "flux": "FLUX", "My Panel": "My Panel"} {
 		path := filepath.Join(t.TempDir(), "rename.db")
 		r, err := Open(path)
 		if err != nil {
