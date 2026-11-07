@@ -35,10 +35,6 @@ agent：在面板 **服务器** 页新建服务器，复制生成的安装命令
 - FLYX (`kure29/flyx`)
 - [Sagit-chu/flvx](https://github.com/Sagit-chu/flvx)
 - [bqlpfy/flux-panel](https://github.com/bqlpfy/flux-panel)
-- [dahaha-365/YaNet](https://github.com/dahaha-365/YaNet)
-- [YiXuanZX/rules](https://github.com/YiXuanZX/rules)
-- [appshubcc/bett-rules](https://github.com/appshubcc/bett-rules)
-- [Koolson/Qure](https://github.com/Koolson/Qure)
 
 ## 免责声明
 
