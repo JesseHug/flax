@@ -101,6 +101,8 @@ const EMPTY_PIPELINE: SubPipeline = {
   dedupe: false,
   sort: "",
   regionGroups: false,
+  chainMode: "node",
+  chainNodeBindings: {},
   chainLanding: "",
   chainRelay: "",
   rules: false,
@@ -223,7 +225,12 @@ function draftFrom(
     name: s.name,
     kind: s.kind,
     groupIds: s.groupIds ?? [],
-    options: { ...EMPTY_PIPELINE, ...s.options },
+    options: {
+      ...EMPTY_PIPELINE,
+      ...s.options,
+      chainMode: s.options?.chainMode || "node",
+      chainNodeBindings: s.options?.chainNodeBindings || {},
+    },
     expireTime: s.expireTime,
     expire: toDateInput(s.expireTime),
     enabled: s.enabled,
@@ -429,9 +436,9 @@ function Editor({
     ? chainCount("landing") > 0 && chainCount("relay") > 0
     : chainPicked
       ? (o.chainLandingNames.length > 0 ||
-          o.chainLandingSources.length > 0 ||
-          o.chainLandingOwn) &&
-        (o.chainRelayNames.length > 0 || o.chainRelaySources.length > 0)
+        o.chainLandingSources.length > 0 ||
+        o.chainLandingOwn) &&
+      (o.chainRelayNames.length > 0 || o.chainRelaySources.length > 0)
       : Boolean(o.chainLanding && o.chainRelay);
 
   return (
@@ -724,13 +731,12 @@ function Editor({
               )}
             </Section>
             <Section
-              hint={`给 mihomo、sing-box（1.12 及以上）、Surge、Shadowrocket、Loon、Quantumult X 加上分流规则；后三个会改为下发完整配置。Stash 和通用链接只有节点${
-                templateOn
+              hint={`给 mihomo、sing-box（1.12 及以上）、Surge、Shadowrocket、Loon、Quantumult X 加上分流规则；后三个会改为下发完整配置。Stash 和通用链接只有节点${templateOn
                   ? `。${TEMPLATE_SLOTS.filter(([k]) => picked[k])
-                      .map(([, l]) => l)
-                      .join("、")} 已用模板，这里的设置对它们不生效`
+                    .map(([, l]) => l)
+                    .join("、")} 已用模板，这里的设置对它们不生效`
                   : ""
-              }`}
+                }`}
               title={templateOn ? "内置分组与规则" : "分组与规则"}
             >
               <ToggleRow
@@ -823,7 +829,25 @@ function Editor({
                 </div>
                 <p className="mt-3 text-xs leading-relaxed text-default-500">
                   网站看到的是落地节点的
-                  IP。客户端里会多出「落地节点」「中转节点」两个组，分别选出口和中转。落地和中转都至少选一个才生效；通用分享链接（Base64）无法表达链式
+                  IP。落地和中转都至少选一个才生效；通用分享链接（Base64）无法表达链式
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium">中转调度模式</p>
+                <Segmented
+                  columns={2}
+                  options={[
+                    ["node", "指定具体节点 (推荐 / Sub-Store 兼容)"],
+                    ["group", "策略组轮询调度"],
+                  ]}
+                  value={o.chainMode || "node"}
+                  onChange={(chainMode) => setOpts({ chainMode })}
+                />
+                <p className="text-xs text-default-400">
+                  {o.chainMode === "group"
+                    ? "落地节点指向「中转节点」策略组；Sub-Store 纯节点导出时会自动降级为具体节点直绑。"
+                    : "落地节点直接绑定明确的目标中转节点（dialer-proxy: \"节点名\"），解决 Sub-Store 聚合与客户端内核校验报错。"}
                 </p>
               </div>
 
@@ -915,14 +939,14 @@ function Editor({
                 />
                 {(o.chainLandingSources.length > 0 ||
                   o.chainRelaySources.length > 0) && (
-                  <ToggleRow
-                    hint="链式代理里的订阅源，没筛选上（或单独设成不用）的节点不放进订阅；不影响其他来源"
-                    id="chain-drop-unused"
-                    label="没用上的节点不放进订阅"
-                    value={o.chainDropUnused}
-                    onChange={(chainDropUnused) => setOpts({ chainDropUnused })}
-                  />
-                )}
+                    <ToggleRow
+                      hint="链式代理里的订阅源，没筛选上（或单独设成不用）的节点不放进订阅；不影响其他来源"
+                      id="chain-drop-unused"
+                      label="没用上的节点不放进订阅"
+                      value={o.chainDropUnused}
+                      onChange={(chainDropUnused) => setOpts({ chainDropUnused })}
+                    />
+                  )}
               </div>
 
               <div className="space-y-2">
@@ -943,29 +967,70 @@ function Editor({
                     {chainNodes.map((n, i) => {
                       const role = chainRole(n);
                       const overridden = pickedRole(n.original) !== null;
+                      const isLanding = role === "landing";
+                      const availableRelays =
+                        chainNodes.filter((x) => chainRole(x) === "relay");
+                      const boundRelay = o.chainNodeBindings?.[n.original] ?? "";
 
                       return (
                         <div
                           key={`${n.original}-${i}`}
-                          className="flex items-center gap-3 px-3 py-2"
+                          className="space-y-1.5 px-3 py-2"
                         >
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate text-sm">{n.original}</div>
-                            <div className="truncate text-xs text-default-400">
-                              {[
-                                overridden && "单独设置",
-                                n.region,
-                                n.protocol,
-                                n.line === "relay" ? "中转线路" : "直连",
-                              ]
-                                .filter(Boolean)
-                                .join(" · ")}
+                          <div className="flex items-center gap-3">
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-sm">{n.original}</div>
+                              <div className="truncate text-xs text-default-400">
+                                {[
+                                  overridden && "单独设置",
+                                  n.region,
+                                  n.protocol,
+                                  n.line === "relay" ? "中转线路" : "直连",
+                                ]
+                                  .filter(Boolean)
+                                  .join(" · ")}
+                              </div>
                             </div>
+                            <ChainRoleButtons
+                              value={role}
+                              onChange={(r) => {
+                                setChainRole(n, r);
+                                if (r !== "landing" && o.chainNodeBindings?.[n.original]) {
+                                  const nextBindings = { ...o.chainNodeBindings };
+                                  delete nextBindings[n.original];
+                                  setOpts({ chainNodeBindings: nextBindings });
+                                }
+                              }}
+                            />
                           </div>
-                          <ChainRoleButtons
-                            value={role}
-                            onChange={(r) => setChainRole(n, r)}
-                          />
+
+                          {isLanding && (o.chainMode || "node") === "node" && availableRelays.length > 0 && (
+                            <div className="flex items-center gap-2 rounded bg-default-100/60 px-2 py-1 text-xs">
+                              <span className="shrink-0 text-default-500">中转:</span>
+                              <select
+                                aria-label={`${n.original} 绑定中转节点`}
+                                className="h-6 flex-1 min-w-0 truncate rounded border border-divider bg-background px-1.5 text-xs text-foreground"
+                                value={boundRelay}
+                                onChange={(e) => {
+                                  setOpts({
+                                    chainNodeBindings: {
+                                      ...o.chainNodeBindings,
+                                      [n.original]: e.target.value,
+                                    },
+                                  });
+                                }}
+                              >
+                                <option value="">
+                                  默认 ({availableRelays[0].original})
+                                </option>
+                                {availableRelays.map((r) => (
+                                  <option key={r.original} value={r.original}>
+                                    {r.original}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -1030,7 +1095,11 @@ function Editor({
                             <span
                               className={`shrink-0 rounded-full px-1.5 py-0.5 ${p.chain === "landing" ? "bg-warning-100 text-warning-700 dark:bg-warning-500/20" : "bg-secondary-100 text-secondary-700 dark:bg-secondary-500/20"}`}
                             >
-                              {p.chain === "landing" ? "落地" : "中转"}
+                              {p.chain === "landing"
+                                ? p.dialerProxy
+                                  ? `落地 → ${p.dialerProxy}`
+                                  : "落地"
+                                : "中转"}
                             </span>
                           )}
                           <span className="shrink-0 text-default-500">
@@ -1152,7 +1221,7 @@ export default function SubscriptionPage() {
       const res = await getSubTemplates();
 
       if (res.code === 0) setTemplates(res.data ?? []);
-    } catch {}
+    } catch { }
   }, []);
   const load = useCallback(async () => {
     try {
@@ -1185,8 +1254,12 @@ export default function SubscriptionPage() {
     void loadTemplates();
   }, [load, loadTemplates]);
 
-  const url = (s: SubscriptionItem, format = "") =>
-    `${panelOrigin()}${s.path}${format ? `?format=${format}` : ""}`;
+  const url = (s: SubscriptionItem, format = "") => {
+    if (!format) return `${panelOrigin()}${s.path}`;
+    if (format.startsWith("?")) return `${panelOrigin()}${s.path}${format}`;
+    if (format.includes("=")) return `${panelOrigin()}${s.path}?${format}`;
+    return `${panelOrigin()}${s.path}?format=${format}`;
+  };
 
   const showResult = (msg: string | undefined, ok: string) => {
     if (msg && msg !== "操作成功") toast(msg, { icon: "⚠️" });
@@ -1430,15 +1503,15 @@ export default function SubscriptionPage() {
         primary={
           tab === "subs"
             ? {
-                key: "create",
-                label: "新建订阅",
-                onPress: () => setDraft(draftFrom(undefined, sources, groups)),
-              }
+              key: "create",
+              label: "新建订阅",
+              onPress: () => setDraft(draftFrom(undefined, sources, groups)),
+            }
             : {
-                key: "create-group",
-                label: "新建节点组",
-                onPress: () => setGroupDraft(groupDraftFrom()),
-              }
+              key: "create-group",
+              label: "新建节点组",
+              onPress: () => setGroupDraft(groupDraftFrom()),
+            }
         }
         search={query}
         onSearch={setQuery}
@@ -1535,12 +1608,12 @@ export default function SubscriptionPage() {
                       {detail.overQuota
                         ? "流量已用完，已从服务器上断开"
                         : [
-                            `↑ ${formatTraffic(detail.uploadBytes)} ↓ ${formatTraffic(detail.downloadBytes)}`,
-                            `${new Date(detail.trafficSince).toLocaleDateString(undefined, { month: "numeric", day: "numeric" })} 起`,
-                            detail.resetDay
-                              ? `每月 ${detail.resetDay} 号重置`
-                              : "不自动重置",
-                          ].join(" · ")}
+                          `↑ ${formatTraffic(detail.uploadBytes)} ↓ ${formatTraffic(detail.downloadBytes)}`,
+                          `${new Date(detail.trafficSince).toLocaleDateString(undefined, { month: "numeric", day: "numeric" })} 起`,
+                          detail.resetDay
+                            ? `每月 ${detail.resetDay} 号重置`
+                            : "不自动重置",
+                        ].join(" · ")}
                     </p>
                   </div>
                   <Segmented
@@ -1777,15 +1850,14 @@ function ChainRoleButtons({
       ).map(([r, label]) => (
         <button
           key={r}
-          className={`rounded-lg border px-2 py-1 text-xs transition-colors ${
-            value === r
+          className={`rounded-lg border px-2 py-1 text-xs transition-colors ${value === r
               ? r === "landing"
                 ? "border-warning bg-warning-50 text-warning-700 dark:bg-warning-500/20"
                 : r === "relay"
                   ? "border-secondary bg-secondary-50 text-secondary-700 dark:bg-secondary-500/20"
                   : "border-default-400 bg-default-100 text-default-700"
               : "border-default-200 text-default-500 hover:border-default-400 dark:border-default-100"
-          }`}
+            }`}
           type="button"
           onClick={() => onChange(r)}
         >

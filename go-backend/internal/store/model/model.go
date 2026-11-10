@@ -542,6 +542,7 @@ type InboundBackup struct {
 	OutboundID          int64  `json:"outboundId,omitempty"`
 	SplitRules          string `json:"splitRules,omitempty"`
 	Tags                string `json:"tags,omitempty"`
+	DialerProxyInboundID int64 `json:"dialerProxyInboundId,omitempty"`
 }
 
 type TemplateBackup struct {

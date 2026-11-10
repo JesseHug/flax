@@ -40,11 +40,6 @@ import { ThemeSettings } from "@/components/theme-settings";
 import { useH5Mode } from "@/hooks/useH5Mode";
 import { NotifySettings, notifySummary } from "@/pages/config/notify-card";
 import {
-  LATENCY_TARGETS_KEY,
-  LatencySettings,
-  latencySummary,
-} from "@/pages/config/latency-card";
-import {
   ConfigLayoutContext,
   ConfigSection,
   Field,
@@ -328,7 +323,6 @@ type SectionKey =
   | "appearance"
   | "security"
   | "network"
-  | "latency"
   | "notify"
   | "announcement"
   | "backup"
@@ -340,7 +334,6 @@ const SECTIONS: Array<[SectionKey, string]> = [
   ["appearance", "外观"],
   ["security", "安全与登录"],
   ["network", "服务器与监控"],
-  ["latency", "延迟测试点"],
   ["notify", "通知"],
   ["announcement", "公告"],
   ["backup", "备份与恢复"],
@@ -349,7 +342,6 @@ const SECTIONS: Array<[SectionKey, string]> = [
 
 // 每个分组包含的配置项，用于判断分组是否有未保存的修改
 const SECTION_CONFIG_KEYS: Partial<Record<SectionKey, string[]>> = {
-  latency: [LATENCY_TARGETS_KEY],
   basic: [
     "app_name",
     "ip",
@@ -1643,14 +1635,6 @@ export default function ConfigPage() {
             {renderItem("monitor_retention_days")}
             {renderItem("github_proxy_enabled")}
             {renderItem("github_proxy_url")}
-          </ConfigSection>
-
-          <ConfigSection
-            {...sectionProps("latency")}
-            summary={latencySummary(configs)}
-            title="延迟测试点"
-          >
-            <LatencySettings configs={configs} onChange={handleConfigChange} />
           </ConfigSection>
 
           <ConfigSection

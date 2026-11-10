@@ -1191,6 +1191,42 @@ export function InboundFormModal({
                             }
                           />
                         )}
+                        <div className="space-y-1 pt-1">
+                          <label
+                            className="text-sm font-medium"
+                            htmlFor="dialer-proxy-inbound"
+                          >
+                            链式代理前置节点 (dialer-proxy)
+                          </label>
+                          <select
+                            aria-label="前置中转节点"
+                            className="h-10 w-full rounded-lg border border-divider bg-background px-3 text-sm"
+                            id="dialer-proxy-inbound"
+                            value={form.dialerProxyInboundId || 0}
+                            onChange={(e) =>
+                              set(
+                                "dialerProxyInboundId",
+                                Number(e.target.value) || 0,
+                              )
+                            }
+                          >
+                            <option value={0}>
+                              不指定 (直连 / 遵从订阅设置)
+                            </option>
+                            {inbounds
+                              .filter((i) => i.id !== form.id)
+                              .map((i) => (
+                                <option key={i.id} value={i.id}>
+                                  {i.name} ({i.nodeName || `节点 ${i.nodeId}`} ·{" "}
+                                  {i.protocol})
+                                </option>
+                              ))}
+                          </select>
+                          <p className="text-xs text-default-500">
+                            作为落地节点时，默认通过此节点进行链式中转（生成订阅时支持
+                            Sub-Store 兼容及直绑输出）
+                          </p>
+                        </div>
                       </div>
                       <Input
                         label="备注"

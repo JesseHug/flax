@@ -359,9 +359,6 @@ func (h *Handler) runReachProbeLoop(ctx context.Context) {
 		if _, err := h.probeRelayLatency(ctx, nil); err != nil && ctx.Err() == nil {
 			log.Printf("relay latency probe failed: %v", err)
 		}
-		if _, err := h.traceNodeRoutes(ctx, nil, false); err != nil && ctx.Err() == nil {
-			log.Printf("node route trace failed: %v", err)
-		}
 		select {
 		case <-ctx.Done():
 			return

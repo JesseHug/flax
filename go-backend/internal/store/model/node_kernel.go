@@ -65,6 +65,9 @@ type NodeInbound struct {
 	// Tags are the user's labels (comma-separated), for telling nodes apart
 	// in the list; they do not affect rendering or subscriptions.
 	Tags string `gorm:"column:tags;type:text;not null;default:''"`
+	// DialerProxyInboundID chains this landing node through a concrete relay inbound
+	// (NodeInbound.ID) in client subscriptions; 0 follows subscription policy.
+	DialerProxyInboundID int64 `gorm:"column:dialer_proxy_inbound_id;not null;default:0;index"`
 }
 
 func (NodeInbound) TableName() string { return "node_inbound" }

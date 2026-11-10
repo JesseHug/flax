@@ -60,6 +60,13 @@ type SubOptions struct {
 	// ChainHideRelays keeps relay nodes out of the node lists and groups:
 	// they are only in the relay group.
 	ChainHideRelays bool
+	// ChainMode is "node" (specific node binding) or "group" (policy group, default/legacy)
+	ChainMode string
+	// ChainNodeBindings maps landing original name or ID -> relay original name or ID
+	ChainNodeBindings map[string]string
+	// NodeOnly indicates pure node export (e.g. ?node_only=1 or ?target=nodes),
+	// returning only the proxies list with concrete dialer-proxy bindings.
+	NodeOnly bool
 	// Script is JavaScript run after the other steps (see sub_script.go).
 	Script string
 	// Rules adds routing rules, DNS and the service groups in RuleGroups

@@ -55,6 +55,10 @@ type subPipeline struct {
 	ChainLandingOwn     bool     `json:"chainLandingOwn"`
 	ChainNoneNames      []string `json:"chainNoneNames"`
 	ChainHideRelays     bool     `json:"chainHideRelays"`
+	// ChainMode is "node" (specific node binding, recommended for Sub-Store) or "group" (policy group).
+	ChainMode string `json:"chainMode,omitempty"`
+	// ChainNodeBindings maps landing original name or ID -> relay original name or ID.
+	ChainNodeBindings map[string]string `json:"chainNodeBindings,omitempty"`
 	// ChainSourceFilters narrows a chain source to the nodes whose name
 	// matches; ChainDropUnused leaves the rest of its nodes out.
 	ChainSourceFilters map[int64]string `json:"chainSourceFilters,omitempty"`
@@ -79,6 +83,7 @@ func (p subPipeline) options() kernel.SubOptions {
 		ChainLandingNames: p.ChainLandingNames, ChainRelayNames: p.ChainRelayNames,
 		ChainLandingSources: p.ChainLandingSources, ChainRelaySources: p.ChainRelaySources,
 		ChainLandingOwn: p.ChainLandingOwn, ChainNoneNames: p.ChainNoneNames, ChainHideRelays: p.ChainHideRelays,
+		ChainMode: p.ChainMode, ChainNodeBindings: p.ChainNodeBindings,
 		ChainSourceFilters: p.ChainSourceFilters, ChainDropUnused: p.ChainDropUnused,
 	}
 }
@@ -160,6 +165,16 @@ func parsePipeline(raw string) subPipeline {
 	}
 	if p.ChainRelaySources == nil {
 		p.ChainRelaySources = []int64{}
+	}
+	if p.ChainNodeBindings == nil {
+		p.ChainNodeBindings = map[string]string{}
+	}
+	if p.ChainMode == "" {
+		if len(p.ChainNodeBindings) > 0 {
+			p.ChainMode = "node"
+		} else {
+			p.ChainMode = "group"
+		}
 	}
 	return p
 }
@@ -777,6 +792,8 @@ type subPreviewItem struct {
 	Line     string `json:"line"` // "direct" or "relay"
 	// Chain is "landing" or "relay" when the subscription chains proxies.
 	Chain string `json:"chain,omitempty"`
+	// DialerProxy is the target relay node when chained.
+	DialerProxy string `json:"dialerProxy,omitempty"`
 	// SourceID is the remote source of an imported node; Own marks the
 	// panel's own nodes.
 	SourceID int64 `json:"sourceId,omitempty"`

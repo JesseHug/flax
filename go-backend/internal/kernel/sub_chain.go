@@ -1,5 +1,7 @@
 package kernel
 
+import "strconv"
+
 // Chained proxies in subscriptions (client side): landing nodes carry a
 // dialer-proxy (Mihomo), detour (sing-box) or underlying-proxy (Surge) set
 // to the relay group, so the client reaches a landing node through whichever
@@ -29,6 +31,15 @@ func markChain(endpoints []Endpoint, opts SubOptions) []Endpoint {
 		switch {
 		case isLanding(*e):
 			e.ChainRole = ChainRoleLanding
+			if opts.ChainNodeBindings != nil {
+				if t, ok := opts.ChainNodeBindings[e.Original]; ok && t != "" {
+					e.DialerProxyTarget = t
+				} else if e.InboundID > 0 {
+					if t, ok := opts.ChainNodeBindings[strconv.FormatInt(e.InboundID, 10)]; ok && t != "" {
+						e.DialerProxyTarget = t
+					}
+				}
+			}
 		case isRelay(*e):
 			e.ChainRole = ChainRoleRelay
 		}
@@ -127,4 +138,38 @@ func toInterfaces(names []string) []interface{} {
 		out[i] = n
 	}
 	return out
+}
+
+// resolveDialerProxy finds the exact rendered name of the relay node this landing
+// node should dial through. It ensures the returned string matches an existing
+// proxy name in rendered relay nodes.
+func resolveDialerProxy(landing Endpoint, relays []Endpoint, opts SubOptions) string {
+	if len(relays) == 0 {
+		return ""
+	}
+	target := landing.DialerProxyTarget
+	if target == "" && opts.ChainNodeBindings != nil {
+		target = opts.ChainNodeBindings[landing.Original]
+		if target == "" && landing.InboundID > 0 {
+			target = opts.ChainNodeBindings[strconv.FormatInt(landing.InboundID, 10)]
+		}
+	}
+	if target != "" {
+		for _, r := range relays {
+			if r.Original == target || r.Name == target || (r.InboundID > 0 && strconv.FormatInt(r.InboundID, 10) == target) {
+				return r.Name
+			}
+		}
+	}
+	if landing.DialerProxyInboundID > 0 {
+		for _, r := range relays {
+			if r.InboundID == landing.DialerProxyInboundID {
+				return r.Name
+			}
+		}
+	}
+	if opts.NodeOnly || opts.ChainMode == "node" {
+		return relays[0].Name
+	}
+	return ChainRelayGroup
 }

@@ -34,8 +34,7 @@ import {
 import { Select, SelectItem } from "@/shadcn-bridge/heroui/select";
 import { Switch } from "@/shadcn-bridge/heroui/switch";
 
-const modalBase =
-  "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden";
+const modalBase = "!w-[calc(100%-32px)] !mx-auto sm:!w-full overflow-hidden";
 
 /** Label shown where a panel-managed inbound shows its node or kernel. */
 export const EXTERNAL_LABEL = "导入的节点";
@@ -363,6 +362,7 @@ interface EditForm {
   link: string;
   remark: string;
   relayOnly: boolean;
+  dialerProxyInboundId?: number;
 }
 
 export function ExternalEditModal({
@@ -391,6 +391,7 @@ export function ExternalEditModal({
             link: "",
             remark: item.remark,
             relayOnly: item.relayOnly,
+            dialerProxyInboundId: item.dialerProxyInboundId ?? 0,
           }
         : null,
     );
@@ -417,6 +418,7 @@ export function ExternalEditModal({
           : { link: form.link.trim() }),
         remark: form.remark,
         relayOnly: form.relayOnly,
+        dialerProxyInboundId: form.dialerProxyInboundId || 0,
       });
 
       if (res.code !== 0) {

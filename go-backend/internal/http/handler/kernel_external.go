@@ -222,6 +222,7 @@ func (h *Handler) inboundExternalUpdate(w http.ResponseWriter, r *http.Request) 
 		Link      string `json:"link"`
 		Remark    string `json:"remark"`
 		RelayOnly bool   `json:"relayOnly"`
+		DialerProxyInboundID int64 `json:"dialerProxyInboundId"`
 	}
 	if err := decodeJSON(r.Body, &req); err != nil {
 		response.WriteJSON(w, response.ErrDefault("请求参数错误"))
@@ -305,6 +306,7 @@ func (h *Handler) inboundExternalUpdate(w http.ResponseWriter, r *http.Request) 
 	row.ShareHost = host
 	row.Remark = strings.TrimSpace(req.Remark)
 	row.RelayOnly = boolToInt(req.RelayOnly)
+	row.DialerProxyInboundID = req.DialerProxyInboundID
 	row.UpdatedTime = time.Now().UnixMilli()
 	if err := h.repo.SaveNodeInbound(row); err != nil {
 		response.WriteJSON(w, response.Err(-2, err.Error()))

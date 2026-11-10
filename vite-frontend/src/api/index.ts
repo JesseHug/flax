@@ -865,6 +865,10 @@ export interface SubPipeline {
   dedupe: boolean;
   sort: "" | "name";
   regionGroups: boolean;
+  /** Chain proxy mode: "node" (specific node direct binding, Sub-Store compatible) or "group" (strategy group) */
+  chainMode?: "node" | "group";
+  /** Concrete relay node binding per landing node (landing original name -> relay original name) */
+  chainNodeBindings?: Record<string, string>;
   /** Client-side chain: names matching chainLanding dial through the relay group. */
   chainLanding: string;
   chainRelay: string;
@@ -1076,6 +1080,8 @@ export interface SubPreviewItem {
   protocol: string;
   line: "direct" | "relay";
   chain?: "landing" | "relay";
+  /** Target relay node name for chain landing node. */
+  dialerProxy?: string;
   /** Remote source of an imported node. */
   sourceId?: number;
   /** A self-built node. */
@@ -1361,6 +1367,7 @@ export const updateExternalInbound = (data: {
   link?: string;
   remark: string;
   relayOnly: boolean;
+  dialerProxyInboundId?: number;
 }) => Network.post("/inbound/external/update", data);
 export const getInboundShare = (id: number) =>
   Network.post<InboundShareEntry[]>("/inbound/share", { id });

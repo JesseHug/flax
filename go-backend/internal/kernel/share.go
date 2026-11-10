@@ -35,6 +35,12 @@ type Endpoint struct {
 	// REALITY, so Mihomo may offer it. Mihomo requires server support, so
 	// it is only set for panel-built inbounds on a new enough Xray.
 	PostQuantumReality bool
+	// InboundID is the source NodeInbound.ID.
+	InboundID int64
+	// DialerProxyInboundID is the target relay NodeInbound.ID if specifically configured.
+	DialerProxyInboundID int64
+	// DialerProxyTarget holds the bound or resolved relay node name/ID.
+	DialerProxyTarget string
 }
 
 // hopRange is the port-hopping range clients may use for this endpoint.
@@ -712,9 +718,18 @@ func Subscription(format string, endpoints []Endpoint, opts SubOptions) (string,
 			}
 		}
 		landing, relay, chain := chainGroups(rendered)
+		var renderedRelays []Endpoint
+		for _, e := range rendered {
+			if e.ChainRole == ChainRoleRelay {
+				renderedRelays = append(renderedRelays, e)
+			}
+		}
 		for i, line := range proxyLines {
 			if chain && rendered[i].ChainRole == ChainRoleLanding {
-				line += ", underlying-proxy=" + ChainRelayGroup
+				dp := resolveDialerProxy(rendered[i], renderedRelays, opts)
+				if dp != "" {
+					line += ", underlying-proxy=" + dp
+				}
 			}
 			lines = append(lines, line)
 			if listed(rendered[i], chain, opts) {
@@ -771,19 +786,31 @@ func clashProfile(endpoints []Endpoint, withRegions bool, opts SubOptions, stash
 		}
 	}
 	landing, relay, chain := chainGroups(rendered)
+	var renderedRelays []Endpoint
+	for _, e := range rendered {
+		if e.ChainRole == ChainRoleRelay {
+			renderedRelays = append(renderedRelays, e)
+		}
+	}
 	proxies := []interface{}{}
 	names := []interface{}{}
 	var plain []string
 	for i, e := range rendered {
 		p := nodes[i]
 		if chain && e.ChainRole == ChainRoleLanding {
-			p = append(p, yamlField{"dialer-proxy", ChainRelayGroup})
+			dp := resolveDialerProxy(e, renderedRelays, opts)
+			if dp != "" {
+				p = append(p, yamlField{"dialer-proxy", dp})
+			}
 		}
 		proxies = append(proxies, p)
 		if listed(e, chain, opts) {
 			names = append(names, e.Name)
 			plain = append(plain, e.Name)
 		}
+	}
+	if opts.NodeOnly {
+		return marshalYAML(yamlNode{{"proxies", proxies}})
 	}
 	var chainNodes []interface{}
 	if chain {
@@ -859,6 +886,12 @@ func singboxProfile(endpoints []Endpoint, withRegions bool, opts SubOptions) (st
 		}
 	}
 	landing, relay, chain := chainGroups(rendered)
+	var renderedRelays []Endpoint
+	for _, e := range rendered {
+		if e.ChainRole == ChainRoleRelay {
+			renderedRelays = append(renderedRelays, e)
+		}
+	}
 	outbounds := []interface{}{}
 	var wgEndpoints []interface{}
 	names := []interface{}{}
@@ -868,7 +901,10 @@ func singboxProfile(endpoints []Endpoint, withRegions bool, opts SubOptions) (st
 			// The outbound that opens the connection dials through the relay
 			// group; a ShadowTLS pair's inner one already detours.
 			if _, detour := o["detour"]; chain && e.ChainRole == ChainRoleLanding && !detour {
-				o["detour"] = ChainRelayGroup
+				dp := resolveDialerProxy(e, renderedRelays, opts)
+				if dp != "" {
+					o["detour"] = dp
+				}
 			}
 			if o["type"] == "wireguard" {
 				// WireGuard is an endpoint in sing-box 1.11+; groups still

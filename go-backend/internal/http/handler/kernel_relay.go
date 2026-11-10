@@ -541,7 +541,18 @@ func (h *Handler) inboundEndpoints(rows []model.NodeInbound) ([]kernel.Endpoint,
 		if row.RelayOnly != 1 && !isLoopbackListen(row.Listen) {
 			host := inboundShareAddress(&row, node)
 			if host != "" {
-				endpoints = append(endpoints, kernel.Endpoint{Name: row.Name, Host: host, Port: row.Port, Inbound: in, Direct: true, Proxy: proxy, SourceID: row.SourceID, PostQuantumReality: pq})
+				endpoints = append(endpoints, kernel.Endpoint{
+					InboundID:            row.ID,
+					DialerProxyInboundID: row.DialerProxyInboundID,
+					Name:                 row.Name,
+					Host:                 host,
+					Port:                 row.Port,
+					Inbound:              in,
+					Direct:               true,
+					Proxy:                proxy,
+					SourceID:             row.SourceID,
+					PostQuantumReality:   pq,
+				})
 				kinds = append(kinds, "direct")
 			}
 		}
@@ -559,7 +570,17 @@ func (h *Handler) inboundEndpoints(rows []model.NodeInbound) ([]kernel.Endpoint,
 					host = rel.ShareHost
 				}
 				// A relay forwards TCP; REALITY still ends at the landing kernel.
-				endpoints = append(endpoints, kernel.Endpoint{Name: name, Host: host, Port: entry.Port, Inbound: in, Proxy: proxy, SourceID: row.SourceID, PostQuantumReality: pq})
+				endpoints = append(endpoints, kernel.Endpoint{
+					InboundID:            row.ID,
+					DialerProxyInboundID: row.DialerProxyInboundID,
+					Name:                 name,
+					Host:                 host,
+					Port:                 entry.Port,
+					Inbound:              in,
+					Proxy:                proxy,
+					SourceID:             row.SourceID,
+					PostQuantumReality:   pq,
+				})
 				kinds = append(kinds, "relay")
 			}
 		}
@@ -611,6 +632,12 @@ func (h *Handler) openSubscription(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 
 	format := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("format")))
+	nodeOnly := r.URL.Query().Get("node_only") == "1" ||
+		r.URL.Query().Get("target") == "nodes" ||
+		format == "clash-nodes" || format == "nodes"
+	if format == "clash-nodes" || format == "nodes" {
+		format = kernel.FormatClash
+	}
 	if format == "" {
 		format = kernel.FormatForUserAgent(r.UserAgent())
 	}
@@ -663,6 +690,7 @@ func (h *Handler) openSubscription(w http.ResponseWriter, r *http.Request) {
 	} else {
 		p := parsePipeline(sub.Options)
 		opts := h.subOptions(p)
+		opts.NodeOnly = nodeOnly
 		opts.SingboxSnell = kernel.SingboxClientHasSnell(r.UserAgent())
 		if p.InfoNodes {
 			opts.Notices = kernel.InfoNotices(sub.ExpireTime, up+down, total)

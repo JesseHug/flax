@@ -64,5 +64,11 @@ export const SUB_CLIENTS: SubClient[] = [
     format: "stash",
     importURL: (url) => `stash://install-config?url=${enc(url)}`,
   },
+  {
+    key: "nodes",
+    label: "纯节点 (Sub-Store)",
+    format: "format=clash&node_only=1",
+    importURL: null,
+  },
   { key: "base64", label: "通用", format: "base64", importURL: null },
 ];

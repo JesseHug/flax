@@ -886,6 +886,9 @@ export interface InboundApiItem {
   outboundName?: string;
   /** The chain target was deleted; traffic is dropped until changed. */
   outboundMissing?: boolean;
+  /** Inbound used as dialer-proxy transit node in subscription chain. */
+  dialerProxyInboundId?: number;
+  dialerProxyInboundName?: string;
   /** 分流 rules, tried in order before the default exit. */
   splitRules: SplitRule[];
   /** The user's labels, for telling nodes apart in the list. */
@@ -918,6 +921,7 @@ export interface InboundMutationPayload {
   relayWhitelist: boolean;
   whitelistExtra: string;
   outboundId: number;
+  dialerProxyInboundId?: number;
   splitRules: SplitRule[];
   enabled?: boolean;
 }

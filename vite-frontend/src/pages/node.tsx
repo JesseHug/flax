@@ -38,7 +38,6 @@ import {
 } from "@/api";
 import { RouteModal } from "@/components/route-modal";
 import { LatencyTrendModal } from "@/components/lazy-charts";
-import { LatencyTargetsModal } from "@/pages/node/latency-targets-modal";
 import { PageLoadingState } from "@/components/page-state";
 import { ActionSheet } from "@/components/action-sheet";
 import {
@@ -218,7 +217,6 @@ export default function NodePage({
   const [probingIds, setProbingIds] = useState<Set<number>>(new Set());
   const [routeNode, setRouteNode] = useState<Node | null>(null);
   const [trendNode, setTrendNode] = useState<Node | null>(null);
-  const [targetNodes, setTargetNodes] = useState<Node[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [batchDeleteModalOpen, setBatchDeleteModalOpen] = useState(false);
   const [batchLoading, setBatchLoading] = useState(false);
@@ -1358,19 +1356,11 @@ export default function NodePage({
     () => ({
       toggleSelect,
       probeNode,
-      setTargetNodes,
       setSheetNodeId,
       setRouteNode,
       setTrendNode,
     }),
-    [
-      toggleSelect,
-      probeNode,
-      setTargetNodes,
-      setSheetNodeId,
-      setRouteNode,
-      setTrendNode,
-    ],
+    [toggleSelect, probeNode, setSheetNodeId, setRouteNode, setTrendNode],
   );
 
   return (
@@ -1401,19 +1391,6 @@ export default function NodePage({
               label: "升级",
               disabled: !canBatchUpgrade || batchUpgradeLoading,
               onPress: () => openUpgradeModal("batch"),
-            },
-            {
-              key: "targets",
-              label: "测试点",
-              disabled: !displayNodes.some(
-                (n) => selectedIds.has(n.id) && n.isRemote !== 1,
-              ),
-              onPress: () =>
-                setTargetNodes(
-                  displayNodes.filter(
-                    (n) => selectedIds.has(n.id) && n.isRemote !== 1,
-                  ),
-                ),
             },
             {
               key: "delete",
@@ -1630,11 +1607,6 @@ export default function NodePage({
                         onPress: () => handleEdit(node),
                       },
                       {
-                        key: "targets",
-                        label: "测试点",
-                        onPress: () => setTargetNodes([node]),
-                      },
-                      {
                         key: "upgrade",
                         label: "升级",
                         disabled: !online,
@@ -1795,11 +1767,6 @@ export default function NodePage({
         nodeId={trendNode?.id ?? null}
         nodeName={trendNode?.name}
         onClose={() => setTrendNode(null)}
-      />
-      <LatencyTargetsModal
-        nodes={targetNodes}
-        onClose={() => setTargetNodes([])}
-        onSaved={() => loadNodes({ silent: true })}
       />
     </PageShell>
   );

@@ -13,7 +13,6 @@ import { formatUptime } from "@/pages/node/format";
 export interface NodeRowActions {
   toggleSelect: (id: number) => void;
   probeNode: (id: number) => Promise<void>;
-  setTargetNodes: (nodes: Node[]) => void;
   setSheetNodeId: (id: number) => void;
   setRouteNode: (node: Node) => void;
   setTrendNode: (node: Node) => void;
@@ -52,32 +51,16 @@ const NodeRowContent = memo(function NodeRowContent({
   const {
     toggleSelect,
     probeNode,
-    setTargetNodes,
     setSheetNodeId,
     setRouteNode,
     setTrendNode,
   } = actions;
   const renderLatency = (node: Node) =>
     node.isRemote !== 1 && node.connectionStatus === "online" ? (
-      node.latencyTargets?.points.length === 0 ? (
-        <button
-          className="rounded-full bg-default-100 px-2 py-0.5 text-xs text-default-500 hover:text-default-700"
-          title="这台服务器没选测试点，点此设置"
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setTargetNodes([node]);
-          }}
-        >
-          不测延迟
-        </button>
-      ) : probePoints(node.latency).length === 0 ? null : (
-        // Nothing until the first round (every 3 minutes) has a result;
-        // re-probing is in the result's menu.
+      probePoints(node.latency).length === 0 ? null : (
         <LatencyCell
           probe={node.latency}
           probing={probing}
-          onEditTargets={() => setTargetNodes([node])}
           onProbe={() => probeNode(node.id)}
           onShowRoute={() => setRouteNode(node)}
           onShowTrend={() => setTrendNode(node)}

@@ -561,7 +561,7 @@ func proxyTypes(proxies []interface{}) map[string]string {
 //
 // Groups that take every node (include-all) are written out when relay
 // nodes are hidden, since Mihomo cannot leave them out by itself.
-func clashTemplateProfile(content string, endpoints []Endpoint, slot string, hideRelays bool) (string, error) {
+func clashTemplateProfile(content string, endpoints []Endpoint, slot string, opts SubOptions) (string, error) {
 	doc, err := parseClashTemplate(content)
 	if err != nil {
 		return "", err
@@ -574,7 +574,12 @@ func clashTemplateProfile(content string, endpoints []Endpoint, slot string, hid
 	if slot == TemplateShadowrocket {
 		proxies, names = shadowrocketProxies(endpoints)
 	} else {
-		proxies, names, chainGroupNodes, hidden = clashTemplateProxies(endpoints, hideRelays)
+		proxies, names, chainGroupNodes, hidden = clashTemplateProxies(endpoints, opts.ChainHideRelays, opts)
+	}
+	if opts.NodeOnly {
+		return marshalYAML(yamlNode{
+			{"proxies", proxies},
+		})
 	}
 	expand := slot == TemplateStash || slot == TemplateShadowrocket || hidden
 	types := proxyTypes(proxies)
@@ -677,7 +682,7 @@ func expandsAnchor(groups *yaml.Node, names []string, types map[string]string) b
 // clashTemplateProxies renders Mihomo / Stash proxies, with the chain
 // groups when the chain applies; names are the nodes groups list, and
 // hidden is set when relay nodes were left out of them.
-func clashTemplateProxies(endpoints []Endpoint, hideRelays bool) (proxies []interface{}, names []string, chainNodes []interface{}, hidden bool) {
+func clashTemplateProxies(endpoints []Endpoint, hideRelays bool, opts SubOptions) (proxies []interface{}, names []string, chainNodes []interface{}, hidden bool) {
 	var rendered []Endpoint
 	var nodes []yamlNode
 	for _, e := range endpoints {
@@ -687,11 +692,20 @@ func clashTemplateProxies(endpoints []Endpoint, hideRelays bool) (proxies []inte
 		}
 	}
 	landing, relay, chain := chainGroups(rendered)
+	var renderedRelays []Endpoint
+	for _, e := range rendered {
+		if e.ChainRole == ChainRoleRelay {
+			renderedRelays = append(renderedRelays, e)
+		}
+	}
 	proxies = []interface{}{}
 	for i, e := range rendered {
 		p := nodes[i]
 		if chain && e.ChainRole == ChainRoleLanding {
-			p = append(p, yamlField{"dialer-proxy", ChainRelayGroup})
+			dp := resolveDialerProxy(e, renderedRelays, opts)
+			if dp != "" {
+				p = append(p, yamlField{"dialer-proxy", dp})
+			}
 		}
 		proxies = append(proxies, p)
 		if listed(e, chain, SubOptions{ChainHideRelays: hideRelays}) {
@@ -846,7 +860,7 @@ func asSlice(v interface{}) []interface{} {
 	return list
 }
 
-func singboxTemplateProfile(content string, endpoints []Endpoint, snell, hideRelays bool) (string, error) {
+func singboxTemplateProfile(content string, endpoints []Endpoint, snell bool, opts SubOptions) (string, error) {
 	cfg, err := parseSingboxTemplate(content)
 	if err != nil {
 		return "", err
@@ -860,12 +874,21 @@ func singboxTemplateProfile(content string, endpoints []Endpoint, snell, hideRel
 		}
 	}
 	landing, relay, chain := chainGroups(rendered)
+	var renderedRelays []Endpoint
+	for _, e := range rendered {
+		if e.ChainRole == ChainRoleRelay {
+			renderedRelays = append(renderedRelays, e)
+		}
+	}
 	var nodeOutbounds, wgEndpoints []interface{}
 	names := make([]string, 0, len(rendered))
 	for i, e := range rendered {
 		for _, o := range obsList[i] {
 			if _, detour := o["detour"]; chain && e.ChainRole == ChainRoleLanding && !detour {
-				o["detour"] = ChainRelayGroup
+				dp := resolveDialerProxy(e, renderedRelays, opts)
+				if dp != "" {
+					o["detour"] = dp
+				}
 			}
 			if o["type"] == "wireguard" {
 				wgEndpoints = append(wgEndpoints, o)
@@ -873,7 +896,7 @@ func singboxTemplateProfile(content string, endpoints []Endpoint, snell, hideRel
 			}
 			nodeOutbounds = append(nodeOutbounds, o)
 		}
-		if listed(e, chain, SubOptions{ChainHideRelays: hideRelays}) {
+		if listed(e, chain, SubOptions{ChainHideRelays: opts.ChainHideRelays}) {
 			names = append(names, e.Name)
 		}
 	}
@@ -1079,7 +1102,7 @@ func surgeListed(lines []string, listed []string) {
 	}
 }
 
-func surgeTemplateProfile(content string, endpoints []Endpoint, hideRelays bool) (string, error) {
+func surgeTemplateProfile(content string, endpoints []Endpoint, opts SubOptions) (string, error) {
 	if _, err := checkSurgeTemplate(content, nil); err != nil {
 		return "", err
 	}
@@ -1093,13 +1116,22 @@ func surgeTemplateProfile(content string, endpoints []Endpoint, hideRelays bool)
 		}
 	}
 	landing, relay, chain := chainGroups(rendered)
+	var renderedRelays []Endpoint
+	for _, e := range rendered {
+		if e.ChainRole == ChainRoleRelay {
+			renderedRelays = append(renderedRelays, e)
+		}
+	}
 	var listedNames []string
 	hidden := false
 	for i := range proxyLines {
 		if chain && rendered[i].ChainRole == ChainRoleLanding {
-			proxyLines[i] += ", underlying-proxy=" + ChainRelayGroup
+			dp := resolveDialerProxy(rendered[i], renderedRelays, opts)
+			if dp != "" {
+				proxyLines[i] += ", underlying-proxy=" + dp
+			}
 		}
-		if listed(rendered[i], chain, SubOptions{ChainHideRelays: hideRelays}) {
+		if listed(rendered[i], chain, SubOptions{ChainHideRelays: opts.ChainHideRelays}) {
 			listedNames = append(listedNames, rendered[i].Name)
 		} else {
 			hidden = true
@@ -1141,11 +1173,11 @@ func surgeTemplateProfile(content string, endpoints []Endpoint, hideRelays bool)
 func templateProfile(slot, content string, endpoints []Endpoint, opts SubOptions) (string, error) {
 	switch slot {
 	case TemplateClash, TemplateStash, TemplateShadowrocket:
-		return clashTemplateProfile(content, endpoints, slot, opts.ChainHideRelays)
+		return clashTemplateProfile(content, endpoints, slot, opts)
 	case TemplateSingbox:
-		return singboxTemplateProfile(content, endpoints, opts.SingboxSnell, opts.ChainHideRelays)
+		return singboxTemplateProfile(content, endpoints, opts.SingboxSnell, opts)
 	case TemplateSurge:
-		return surgeTemplateProfile(content, endpoints, opts.ChainHideRelays)
+		return surgeTemplateProfile(content, endpoints, opts)
 	}
 	return "", fmt.Errorf("不支持的模板格式 %s", slot)
 }

@@ -500,8 +500,17 @@ func previewItems(nodes []kernel.Endpoint) []subPreviewItem {
 		if e.Direct {
 			line = "direct"
 		}
+		dialerProxy := e.DialerProxyTarget
+		if e.ChainRole == kernel.ChainRoleLanding && dialerProxy == "" {
+			for _, r := range nodes {
+				if r.ChainRole == kernel.ChainRoleRelay {
+					dialerProxy = r.Original
+					break
+				}
+			}
+		}
 		items = append(items, subPreviewItem{Name: e.Name, Original: e.Original, Region: kernel.RegionOf(e.Name),
-			Protocol: kernel.EndpointProtocol(e), Line: line, Chain: e.ChainRole, SourceID: e.SourceID, Own: e.Proxy == nil && e.SourceID == 0})
+			Protocol: kernel.EndpointProtocol(e), Line: line, Chain: e.ChainRole, DialerProxy: dialerProxy, SourceID: e.SourceID, Own: e.Proxy == nil && e.SourceID == 0})
 	}
 	return items
 }

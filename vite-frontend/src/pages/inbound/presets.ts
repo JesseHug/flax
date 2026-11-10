@@ -131,12 +131,14 @@ export interface InboundForm {
   whitelistExtra: string;
   /** Chained outbound inbound id; "" leaves directly. */
   outboundId: string;
+  /** Inbound used as dialer-proxy transit node in subscription chain. */
+  dialerProxyInboundId?: number;
   outboundIpStrategy:
-    | "auto"
-    | "ipv4_only"
-    | "ipv6_only"
-    | "prefer_ipv4"
-    | "prefer_ipv6";
+  | "auto"
+  | "ipv4_only"
+  | "ipv6_only"
+  | "prefer_ipv4"
+  | "prefer_ipv6";
   splitRules: SplitRuleForm[];
   enabled: boolean;
 }
@@ -482,6 +484,7 @@ export function formFromItem(item: InboundApiItem): InboundForm {
     relayWhitelist: item.relayWhitelist,
     whitelistExtra: item.whitelistExtra,
     outboundId: item.outboundId ? String(item.outboundId) : "",
+    dialerProxyInboundId: item.dialerProxyInboundId ?? 0,
     outboundIpStrategy: item.outboundIpStrategy || "auto",
     splitRules: splitFormFromItem(item),
     enabled: item.enabled,
@@ -637,12 +640,12 @@ export function toPayload(form: InboundForm): InboundMutationPayload {
           : undefined,
       ...(form.securityType === "tls" && form.certMode === "acme"
         ? {
-            acmeEmail: form.acmeEmail.trim() || undefined,
-            acmeDns: form.acmeDns || undefined,
-            // Empty keeps the stored credentials when editing.
-            acmeDnsKey: form.acmeDnsKey.trim() || undefined,
-            acmeDnsSecret: form.acmeDnsSecret.trim() || undefined,
-          }
+          acmeEmail: form.acmeEmail.trim() || undefined,
+          acmeDns: form.acmeDns || undefined,
+          // Empty keeps the stored credentials when editing.
+          acmeDnsKey: form.acmeDnsKey.trim() || undefined,
+          acmeDnsSecret: form.acmeDnsSecret.trim() || undefined,
+        }
         : {}),
     },
     extra: form.extra.trim(),
@@ -654,6 +657,7 @@ export function toPayload(form: InboundForm): InboundMutationPayload {
     relayWhitelist: form.relayWhitelist,
     whitelistExtra: form.relayWhitelist ? form.whitelistExtra.trim() : "",
     outboundId: Number(form.outboundId) || 0,
+    dialerProxyInboundId: form.dialerProxyInboundId ? Number(form.dialerProxyInboundId) : 0,
     outboundIpStrategy: form.outboundIpStrategy,
     splitRules: splitPayload(form.splitRules),
     enabled: form.enabled,

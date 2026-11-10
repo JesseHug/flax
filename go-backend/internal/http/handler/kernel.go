@@ -121,6 +121,9 @@ type inboundView struct {
 	OutboundID      int64  `json:"outboundId"`
 	OutboundName    string `json:"outboundName,omitempty"`
 	OutboundMissing bool   `json:"outboundMissing,omitempty"`
+	// DialerProxyInboundID chains this landing node through a concrete relay inbound.
+	DialerProxyInboundID   int64  `json:"dialerProxyInboundId"`
+	DialerProxyInboundName string `json:"dialerProxyInboundName,omitempty"`
 	// SplitRules are the inbound's 分流 rules.
 	SplitRules         []kernel.SplitRule `json:"splitRules"`
 	OutboundIPStrategy string             `json:"outboundIpStrategy"`
@@ -159,6 +162,7 @@ type inboundRequest struct {
 	RelayWhitelist      bool               `json:"relayWhitelist"`
 	WhitelistExtra      string             `json:"whitelistExtra"`
 	OutboundID          int64              `json:"outboundId"`
+	DialerProxyInboundID int64              `json:"dialerProxyInboundId"`
 	SplitRules          []kernel.SplitRule `json:"splitRules"`
 	Enabled             *bool              `json:"enabled"`
 }
@@ -607,6 +611,10 @@ func (h *Handler) inboundList(w http.ResponseWriter, r *http.Request) {
 			name, ok := names[row.OutboundID]
 			v.OutboundName, v.OutboundMissing = name, !ok
 		}
+		v.DialerProxyInboundID = row.DialerProxyInboundID
+		if row.DialerProxyInboundID != 0 {
+			v.DialerProxyInboundName = names[row.DialerProxyInboundID]
+		}
 		if node != nil {
 			v.NodeName = node.Name
 			v.NodeServerIP = node.ServerIP
@@ -812,6 +820,7 @@ func (h *Handler) inboundSave(w http.ResponseWriter, r *http.Request, update boo
 	if req.Enabled != nil {
 		row.Enabled = boolToInt(*req.Enabled)
 	}
+	row.DialerProxyInboundID = req.DialerProxyInboundID
 	row.UpdatedTime = now
 
 	if update {
