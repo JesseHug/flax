@@ -579,7 +579,7 @@ func clashTemplateProfile(content string, endpoints []Endpoint, slot string, opt
 	if opts.NodeOnly {
 		return marshalYAML(yamlNode{
 			{"proxies", proxies},
-		})
+		}), nil
 	}
 	expand := slot == TemplateStash || slot == TemplateShadowrocket || hidden
 	types := proxyTypes(proxies)
