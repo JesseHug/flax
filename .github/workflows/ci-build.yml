@@ -1,6 +1,7 @@
 name: CI Build Check
 
 on:
+  workflow_call:
   push:
     branches: ['**']
   pull_request:

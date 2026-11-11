@@ -374,6 +374,24 @@ func (h *Handler) probeNodeLatency(ctx context.Context, ids []int64) (map[int64]
 	return results, nil
 }
 
+// latencyProbe summarizes a node's points: OK when any point answered,
+// with the worst answering point's latency.
+func latencyProbe(points []latencyPoint, checkedAt int64) reachProbe {
+	p := reachProbe{CheckedAt: checkedAt, Points: points}
+	for _, pt := range points {
+		if pt.OK {
+			p.OK = true
+			if pt.LatencyMs > p.LatencyMs {
+				p.LatencyMs = pt.LatencyMs
+			}
+		}
+	}
+	if !p.OK {
+		p.Error = "测试点都连不上"
+	}
+	return p
+}
+
 // inboundProbeView is what the inbound list shows: the direct reachability check
 // made from the panel server.
 func (h *Handler) inboundProbeView(row *model.NodeInbound) *reachProbe {

@@ -142,29 +142,29 @@ type kernelSecurityView struct {
 }
 
 type inboundRequest struct {
-	OutboundIPStrategy  *string            `json:"outboundIpStrategy"`
-	ID                  int64              `json:"id"`
-	NodeID              int64              `json:"nodeId"`
-	KernelType          string             `json:"kernelType"`
-	Name                string             `json:"name"`
-	Protocol            string             `json:"protocol"`
-	Listen              string             `json:"listen"`
-	Port                int                `json:"port"`
-	Settings            kernel.Settings    `json:"settings"`
-	Transport           kernel.Transport   `json:"transport"`
-	Security            kernel.Security    `json:"security"`
-	Extra               string             `json:"extra"`
-	ShareAddressMode    *string            `json:"shareAddressMode"`
-	ShareHost           string             `json:"shareHost"`
-	Remark              string             `json:"remark"`
-	RelayOnly           bool               `json:"relayOnly"`
-	AcceptProxyProtocol bool               `json:"acceptProxyProtocol"`
-	RelayWhitelist      bool               `json:"relayWhitelist"`
-	WhitelistExtra      string             `json:"whitelistExtra"`
-	OutboundID          int64              `json:"outboundId"`
+	OutboundIPStrategy   *string            `json:"outboundIpStrategy"`
+	ID                   int64              `json:"id"`
+	NodeID               int64              `json:"nodeId"`
+	KernelType           string             `json:"kernelType"`
+	Name                 string             `json:"name"`
+	Protocol             string             `json:"protocol"`
+	Listen               string             `json:"listen"`
+	Port                 int                `json:"port"`
+	Settings             kernel.Settings    `json:"settings"`
+	Transport            kernel.Transport   `json:"transport"`
+	Security             kernel.Security    `json:"security"`
+	Extra                string             `json:"extra"`
+	ShareAddressMode     *string            `json:"shareAddressMode"`
+	ShareHost            string             `json:"shareHost"`
+	Remark               string             `json:"remark"`
+	RelayOnly            bool               `json:"relayOnly"`
+	AcceptProxyProtocol  bool               `json:"acceptProxyProtocol"`
+	RelayWhitelist       bool               `json:"relayWhitelist"`
+	WhitelistExtra       string             `json:"whitelistExtra"`
+	OutboundID           int64              `json:"outboundId"`
 	DialerProxyInboundID int64              `json:"dialerProxyInboundId"`
-	SplitRules          []kernel.SplitRule `json:"splitRules"`
-	Enabled             *bool              `json:"enabled"`
+	SplitRules           []kernel.SplitRule `json:"splitRules"`
+	Enabled              *bool              `json:"enabled"`
 }
 
 // ---- conversion ----

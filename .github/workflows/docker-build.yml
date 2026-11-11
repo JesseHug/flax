@@ -79,9 +79,13 @@ jobs:
             fi
           fi
 
+  ci-check:
+    name: Run CI Build Checks
+    uses: ./.github/workflows/ci-build.yml
+
   build-gost:
     name: Build & Compress GOST Binary
-    needs: check-version
+    needs: [check-version, ci-check]
     if: needs.check-version.outputs.should_build_gost == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -206,7 +210,7 @@ jobs:
 
   build-vite:
     name: Build & Push Vite Frontend
-    needs: check-version
+    needs: [check-version, ci-check]
     if: needs.check-version.outputs.should_build == 'true'
     runs-on: ubuntu-latest
     permissions:
@@ -249,7 +253,7 @@ jobs:
 
   build-go-backend:
     name: Build & Push Go Backend
-    needs: check-version
+    needs: [check-version, ci-check]
     if: needs.check-version.outputs.should_build == 'true'
     runs-on: ubuntu-latest
     permissions:

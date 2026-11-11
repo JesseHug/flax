@@ -213,16 +213,16 @@ func (h *Handler) inboundExternalUpdate(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	var req struct {
-		ID        int64  `json:"id"`
-		Name      string `json:"name"`
-		Host      string `json:"host"`
-		Port      int    `json:"port"`
-		Method    string `json:"method"`
-		Password  string `json:"password"`
-		Link      string `json:"link"`
-		Remark    string `json:"remark"`
-		RelayOnly bool   `json:"relayOnly"`
-		DialerProxyInboundID int64 `json:"dialerProxyInboundId"`
+		ID                   int64  `json:"id"`
+		Name                 string `json:"name"`
+		Host                 string `json:"host"`
+		Port                 int    `json:"port"`
+		Method               string `json:"method"`
+		Password             string `json:"password"`
+		Link                 string `json:"link"`
+		Remark               string `json:"remark"`
+		RelayOnly            bool   `json:"relayOnly"`
+		DialerProxyInboundID int64  `json:"dialerProxyInboundId"`
 	}
 	if err := decodeJSON(r.Body, &req); err != nil {
 		response.WriteJSON(w, response.ErrDefault("请求参数错误"))
