@@ -395,12 +395,21 @@ jobs:
             "${{ env.REGISTRY }}/${OWNER}" "${{ github.sha }}" > release-notes.md
           cat release-notes.md
 
-          # 创建 release
-          gh release create "${VERSION}" \
-            --target "${{ github.sha }}" \
-            --title "Release ${VERSION}" \
-            --notes-file release-notes.md \
-            --repo ${{ github.repository }}
+          # 创建或更新 release
+          if gh release view "${VERSION}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "Release ${VERSION} already exists, updating..."
+            gh release edit "${VERSION}" \
+              --target "${{ github.sha }}" \
+              --title "Release ${VERSION}" \
+              --notes-file release-notes.md \
+              --repo "${{ github.repository }}"
+          else
+            gh release create "${VERSION}" \
+              --target "${{ github.sha }}" \
+              --title "Release ${VERSION}" \
+              --notes-file release-notes.md \
+              --repo "${{ github.repository }}"
+          fi
 
           # 上传所有文件到 release
           echo "📤 上传 GOST 二进制文件..."
