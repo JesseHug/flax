@@ -2,7 +2,7 @@
 
 每个版本的主要变化。**升级** 一行说明除了面板以外还要不要升级节点 agent；没写的只需升级面板，见 [升级](./guide/upgrade.md)。
 
-完整的提交记录见 [GitHub Releases](https://github.com/kure29/flyx/releases)。
+完整的提交记录见 [GitHub Releases](https://github.com/JesseHug/flux/releases)。
 
 ## 3.5.8
 
@@ -322,7 +322,7 @@
 
 - 订阅模板支持 Stash 和 Shadowrocket：在订阅的 **规则** 页给它们选一个 Mihomo 格式的模板（可以和 Mihomo 共用），面板会把 `include-all` / `filter` 策略组展开成节点列表；Shadowrocket 选了模板后改为导入完整配置，见 [订阅模板](./guide/subscription-templates.md#在订阅里使用)
 - 模板检查会提醒 `mrs` 格式的规则集只有 Mihomo 能读
-- 新增 [在线演示](https://kure29.github.io/flyx/demo/)：不用安装就能看看面板长什么样
+- 新增 [在线演示](https://jessehug.github.io/flux/demo/)：不用安装就能看看面板长什么样
 
 ## 3.3.24
 

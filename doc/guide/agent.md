@@ -22,7 +22,7 @@ docker run -d --name flyx-agent \
   --restart unless-stopped --network host --cap-add NET_ADMIN \
   -v /etc/flyx-agent:/etc/flyx-agent \
   -e FLYX_AGENT_ADDR=<面板地址> -e FLYX_AGENT_SECRET=<密钥> \
-  ghcr.io/kure29/flyx-agent:<版本>
+  ghcr.io/jessehug/flyx-agent:<版本>
 ```
 
 - `--network host`：转发和入站要按需监听任意端口，必须用宿主机网络
@@ -102,13 +102,13 @@ FLYX 保留自己的内核参数备份和恢复机制，内置固定版本的 tc
 在服务器上运行：
 
 ```bash
-curl -L https://github.com/kure29/flyx/releases/latest/download/install.sh -o install.sh && chmod +x install.sh && ./install.sh
+curl -L https://github.com/JesseHug/flux/releases/latest/download/install.sh -o install.sh && chmod +x install.sh && ./install.sh
 ```
 
 Alpine Linux 最小化安装若未包含 `curl`，可使用系统自带的 `wget` 下载：
 
 ```bash
-wget -O install.sh https://github.com/kure29/flyx/releases/latest/download/install.sh && chmod +x install.sh && ./install.sh
+wget -O install.sh https://github.com/JesseHug/flux/releases/latest/download/install.sh && chmod +x install.sh && ./install.sh
 ```
 
 脚本会在 Alpine 上自动安装 Bash、`curl` 和 CA 证书，并使用 OpenRC 注册、启动和管理 `flyx-agent` 服务；其他受支持的 Linux 发行版继续使用 systemd。

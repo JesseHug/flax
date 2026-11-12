@@ -36,17 +36,17 @@ FLYX 3.4.0 之前和 flux-panel、FLVX 用的是同一套名字，所以安装�
 重新运行安装脚本，选 `2. 更新面板`。脚本会按运行中容器的标签找到部署目录（新安装默认为 `/opt/flyx-panel`）；找不到时，在部署目录（存放 `docker-compose.yml` 和 `.env` 的目录）里运行：
 
 ```bash
-curl -L https://github.com/kure29/flyx/releases/latest/download/panel_install.sh -o panel_install.sh && chmod +x panel_install.sh && ./panel_install.sh
+curl -L https://github.com/JesseHug/flux/releases/latest/download/panel_install.sh -o panel_install.sh && chmod +x panel_install.sh && ./panel_install.sh
 ```
 
 数据会保留，更新前会自动备份到部署目录的 `backups/`。
 
 ## 指定版本
 
-到 [Releases](https://github.com/kure29/flyx/releases) 复制对应版本的命令，例如：
+到 [Releases](https://github.com/JesseHug/flux/releases) 复制对应版本的命令，例如：
 
 ```bash
-curl -L https://github.com/kure29/flyx/releases/download/3.0.7/panel_install.sh -o panel_install.sh && chmod +x panel_install.sh && ./panel_install.sh
+curl -L https://github.com/JesseHug/flux/releases/download/3.5.8/panel_install.sh -o panel_install.sh && chmod +x panel_install.sh && ./panel_install.sh
 ```
 
 ## agent 升级

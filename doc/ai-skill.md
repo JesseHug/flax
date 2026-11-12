@@ -21,8 +21,8 @@ mkdir -p ~/.agents/skills
 ln -sf $(pwd)/skills/flyx-api ~/.agents/skills/
 
 # 或从 GitHub
-git clone https://github.com/kure29/flyx.git
-cd flyx
+git clone https://github.com/JesseHug/flux.git
+cd flux
 ln -sf $(pwd)/skills/flyx-api ~/.agents/skills/
 ```
 

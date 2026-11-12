@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  name: FLYX
+  name: FLUX
   text: 转发 + 节点搭建面板
   tagline: 在一个面板里管理服务器、节点与中转，一键部署 Xray / sing-box / Snell 节点并对接中转
   actions:
@@ -11,13 +11,13 @@ hero:
       link: /guide/getting-started
     - theme: alt
       text: 在线演示
-      link: https://kure29.github.io/flyx/demo/
+      link: https://jessehug.github.io/flux/demo/
     - theme: alt
       text: 基本概念
       link: /guide/concepts
     - theme: alt
       text: GitHub
-      link: https://github.com/kure29/flyx
+      link: https://github.com/JesseHug/flux
     - theme: alt
       text: Telegram 交流群
       link: https://t.me/flyx_chat
@@ -30,9 +30,9 @@ features:
   - title: 导入节点
     details: 粘贴分享链接、Clash / sing-box / Surge 配置或订阅地址，别处搭好的节点也能对接中转、加入订阅。
   - title: 订阅
-    details: 参考 Sub-Store：节点组统一挑选节点、过滤、改名，多个订阅自由组合、按地区分组，可分享给他人；按客户端自动返回 Clash / Mihomo、sing-box、Surge 或 base64。
-  - title: 延迟与回程
-    details: 服务器定时测到北京 / 上海 / 广东三网的延迟和丢包，识别 CN2 GIA、9929、CMIN2 等回程线路，有趋势图和异常告警。
+    details: 参考 Sub-Store：节点组统一挑选节点、过滤、改名，支持链式代理具体节点直绑与纯节点模式（Sub-Store 兼容），多个订阅自由组合、按地区分组，可分享给他人；按客户端自动返回 Clash / Mihomo、sing-box、Surge 或 base64。
+  - title: 延迟与连通性
+    details: 面板服务器高精度实时探测各节点直连延迟，优先通过长连接 WebSocket Ping 测量 RTT，探针离线时自动切换 TCP 探测。
   - title: 流量转发
     details: TCP / UDP 端口转发与隧道转发，配额、限速、单向或双向计费。
   - title: 面板内升级

@@ -14,7 +14,7 @@ import os from "node:os";
 import path from "node:path";
 
 const dir = path.resolve(process.argv[2] || "dist-demo");
-const BASE = "/flyx/demo/";
+const BASE = process.env.VITE_BASE || "/flux/demo/";
 // Admins' 监控 redirects to 节点, which is already on the list.
 const ADMIN_PAGES = ["dashboard", "node", "inbound", "relay", "forward", "tunnel", "subscription", "limit", "user", "group", "panel-sharing", "config", "profile"];
 const USER_PAGES = ["dashboard", "my-subscriptions", "forward", "profile"];
