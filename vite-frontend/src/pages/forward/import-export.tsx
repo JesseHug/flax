@@ -293,8 +293,8 @@ export function ImportModal({
                 }
               }}
             >
-              <SelectItem key="flyx" textValue="FLYX 格式">
-                FLYX 格式（管道分隔）
+              <SelectItem key="flyx" textValue="FLUX 格式">
+                FLUX 格式（管道分隔）
               </SelectItem>
               <SelectItem key="ny" textValue="ny格式">
                 ny格式（JSON）

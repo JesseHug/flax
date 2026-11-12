@@ -18,9 +18,6 @@ hero:
     - theme: alt
       text: GitHub
       link: https://github.com/JesseHug/flux
-    - theme: alt
-      text: Telegram 交流群
-      link: https://t.me/flyx_chat
 
 features:
   - title: 多内核节点

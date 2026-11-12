@@ -376,7 +376,7 @@ export function NodeTuneModal({
                 </div>
               )}
               <p className="text-xs text-default-500">
-                参数应用后立即生效并保存；恢复原配置会撤销 FLYX 的调优和整形。
+                参数应用后立即生效并保存；恢复原配置会撤销 FLUX 的调优和整形。
               </p>
               {status.groups.map((group) => (
                 <details
