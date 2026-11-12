@@ -15,9 +15,9 @@ import type { ThemePackage } from "../types";
 const defaultTheme: ThemePackage = {
   id: "default",
   name: "默认主题",
-  author: "FLYX Team",
+  author: "FLUX Team",
   version: "1.0.0",
-  description: "FLYX 内置默认极简黑白主题",
+  description: "FLUX 内置默认极简黑白主题",
 
   tokens: {
     light: {
