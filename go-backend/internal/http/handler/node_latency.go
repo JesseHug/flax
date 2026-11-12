@@ -300,76 +300,75 @@ func latencyCommandError(err error) string {
 	}
 }
 
-// probeNodeDirect measures the panel server's direct latency to a node.
-func (h *Handler) probeNodeDirect(ctx context.Context, node model.Node) reachProbe {
-	now := time.Now()
-	if h.wsServer != nil && h.wsServer.IsNodeOnline(node.ID) {
-		t0 := time.Now()
-		_, err := h.wsServer.SendCommand(node.ID, "ping", nil, reachProbeTimeout)
-		if err == nil {
-			ms := time.Since(t0).Milliseconds()
-			if ms < 1 {
-				ms = 1
-			}
-			return reachProbe{OK: true, LatencyMs: ms, CheckedAt: now.UnixMilli(), From: "面板服务器"}
-		}
-	}
-	ip := strings.TrimSpace(node.ServerIP)
-	if ip != "" {
-		port := 22
-		if ssh, err := h.repo.GetNodeSSHConfig(node.ID); err == nil && ssh != nil && ssh.Port > 0 {
-			port = ssh.Port
-		}
-		p, _ := probeInboundAt(ctx, ip, port)
-		if p.OK {
-			p.From = "面板服务器"
-			return p
-		}
-	}
-	return reachProbe{OK: false, Error: "无法连接", CheckedAt: now.UnixMilli(), From: "面板服务器"}
-}
-
-// probeNodeLatency measures the panel server's direct latency to each online node.
+// probeNodeLatency measures the given local nodes' latency (all online ones
+// when ids is empty) to every enabled reference point and records it.
 func (h *Handler) probeNodeLatency(ctx context.Context, ids []int64) (map[int64]reachProbe, error) {
 	started := time.Now().UnixNano()
 	nodes, err := h.repo.ListMonitorNodes()
 	if err != nil {
 		return nil, err
 	}
+	pool := h.latencyPool()
 	want := make(map[int64]bool, len(ids))
 	for _, id := range ids {
 		want[id] = true
 	}
-	var targets []model.Node
+	targets := make(map[int64][]latencyTarget)
+	points := make(map[int64][]latencyPoint)
 	for _, n := range nodes {
 		if (len(ids) > 0 && !want[n.ID]) || n.Status != 1 {
 			continue
 		}
-		targets = append(targets, n)
+		if t := targetsForNode(pool, n.LatencyTargets); len(t) > 0 {
+			targets[n.ID] = t
+			points[n.ID] = make([]latencyPoint, len(t))
+		}
 	}
 
-	results := make(map[int64]reachProbe, len(targets))
-	var mu sync.Mutex
+	type job struct {
+		nodeID int64
+		i      int
+		t      latencyTarget
+	}
+	var jobs []job
+	for nodeID, list := range targets {
+		for i, t := range list {
+			jobs = append(jobs, job{nodeID, i, t})
+		}
+	}
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, latencyParallel)
-	for _, n := range targets {
+	for _, j := range interleaveByNode(jobs, func(j job) int64 { return j.nodeID }) {
 		if ctx.Err() != nil {
 			break
 		}
 		wg.Add(1)
 		sem <- struct{}{}
-		go func(node model.Node) {
+		go func(j job) {
 			defer wg.Done()
 			defer func() { <-sem }()
-			p := h.probeNodeDirect(ctx, node)
-			mu.Lock()
-			results[node.ID] = p
-			mu.Unlock()
-		}(n)
+			data, err := nodeLatencyPing(h, j.nodeID, j.t.Host, j.t.Port)
+			// Each goroutine writes its own slot.
+			points[j.nodeID][j.i] = latencyPointFrom(j.t, data, err)
+		}(j)
 	}
 	wg.Wait()
+	now := time.Now().UnixMilli()
+	results := make(map[int64]reachProbe, len(points))
+	for nodeID, list := range points {
+		results[nodeID] = latencyProbe(list, now)
+	}
 	if ctx.Err() == nil {
 		h.nodeLatency.replaceRound(results, len(ids) == 0, started)
+		h.recordLatencySamples(results)
+		// Streaks count scheduled rounds; a click's extra probe is not one.
+		if len(ids) == 0 {
+			names := make(map[int64]string, len(nodes))
+			for _, n := range nodes {
+				names[n.ID] = n.Name
+			}
+			h.alertLatency(results, names)
+		}
 	}
 	return results, nil
 }
@@ -392,10 +391,28 @@ func latencyProbe(points []latencyPoint, checkedAt int64) reachProbe {
 	return p
 }
 
-// inboundProbeView is what the inbound list shows: the direct reachability check
-// made from the panel server.
+// inboundProbeView is what the inbound list shows: a built inbound takes
+// its node's latency to the reference points, unless the panel found its
+// port down; others keep the panel's reachability check.
 func (h *Handler) inboundProbeView(row *model.NodeInbound) *reachProbe {
 	reach, hasReach := h.reachProbes.get(row.ID)
+	if !isExternalInbound(row) {
+		if node, ok := h.nodeLatency.get(row.NodeID); ok && len(node.Points) > 0 {
+			// The view combines a port check with reference-point samples.
+			// Recovering the port must not move its timestamp backwards to an
+			// older node sample, or clients will keep the newer cached failure.
+			if hasReach {
+				node.CheckedAt = max(node.CheckedAt, reach.CheckedAt)
+			}
+			if hasReach && !reach.Skipped && !reach.OK {
+				reach.CheckedAt = node.CheckedAt
+				return &reach
+			}
+			view := h.withRoutes(row.NodeID, node)
+			view.OK, view.Error = true, ""
+			return &view
+		}
+	}
 	if !hasReach {
 		return nil
 	}
